@@ -54,13 +54,14 @@
       z-index: 1;
       min-height: 100svh;
       display: grid;
-      place-items: center;
+      gap: clamp(16px, 2vw, 24px);
+      align-content: center;
       padding: clamp(20px, 4vw, 48px);
     }
 
     .hero {
       width: min(960px, 100%);
-      min-height: min(78svh, 680px);
+      min-height: min(62svh, 620px);
       display: grid;
       grid-template-columns: 1.2fr 0.8fr;
       gap: clamp(18px, 2.5vw, 36px);
@@ -160,6 +161,124 @@
       }
     }
 
+    .gallery {
+      width: min(960px, 100%);
+      display: grid;
+      gap: 14px;
+      padding-top: clamp(16px, 2vw, 24px);
+    }
+
+    .gallery-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .gallery-title {
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--neon-cyan);
+      text-shadow: 0 0 10px rgba(31, 245, 255, 0.52);
+    }
+
+    .gallery-status {
+      font-size: 0.92rem;
+      color: rgba(217, 238, 255, 0.85);
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .carousel {
+      position: relative;
+      border: 1px solid rgba(31, 245, 255, 0.45);
+      border-radius: 14px;
+      overflow: hidden;
+      touch-action: pan-y;
+      background: rgba(5, 8, 20, 0.85);
+    }
+
+    .track {
+      display: flex;
+      transition: transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
+      will-change: transform;
+    }
+
+    .slide {
+      min-width: 100%;
+      aspect-ratio: 16 / 10;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      filter: saturate(1.08) contrast(1.05);
+      transform: scale(1.01);
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: clamp(34px, 5vw, 44px);
+      height: clamp(34px, 5vw, 44px);
+      border-radius: 999px;
+      border: 1px solid rgba(255, 59, 245, 0.7);
+      background: rgba(7, 11, 27, 0.7);
+      color: #f7fbff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 0 14px rgba(255, 59, 245, 0.35);
+      transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+      z-index: 2;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 59, 245, 0.2);
+      box-shadow: 0 0 18px rgba(31, 245, 255, 0.45);
+    }
+
+    .nav-btn:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    .nav-btn.prev {
+      left: 10px;
+    }
+
+    .nav-btn.next {
+      right: 10px;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(217, 238, 255, 0.35);
+      cursor: pointer;
+    }
+
+    .dot.active {
+      background: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(31, 245, 255, 0.75);
+    }
+
     @media (max-width: 900px) {
       .hero {
         grid-template-columns: 1fr;
@@ -172,6 +291,15 @@
 
       .core {
         width: min(70vw, 290px);
+      }
+
+      .gallery-head {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .slide {
+        aspect-ratio: 4 / 3;
       }
     }
   </style>
@@ -193,6 +321,130 @@
         <div class="core" aria-hidden="true"></div>
       </aside>
     </section>
+
+    <section class="panel gallery" aria-label="赛博朋克图片集">
+      <div class="gallery-head">
+        <h2 class="gallery-title">Neon Gallery</h2>
+        <p class="gallery-status" id="gallery-status">01 / 10</p>
+      </div>
+
+      <div class="carousel" id="carousel">
+        <button class="nav-btn prev" id="prev-btn" aria-label="上一张">&#10094;</button>
+        <div class="track" id="track">
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,city?lock=1" alt="赛博朋克城市夜景 1" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,neon?lock=2" alt="赛博朋克城市夜景 2" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,street?lock=3" alt="赛博朋克城市夜景 3" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,night?lock=4" alt="赛博朋克城市夜景 4" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,lights?lock=5" alt="赛博朋克城市夜景 5" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,city?lock=6" alt="赛博朋克城市夜景 6" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,neon?lock=7" alt="赛博朋克城市夜景 7" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,street?lock=8" alt="赛博朋克城市夜景 8" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,night?lock=9" alt="赛博朋克城市夜景 9" loading="lazy" draggable="false"></figure>
+          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,lights?lock=10" alt="赛博朋克城市夜景 10" loading="lazy" draggable="false"></figure>
+        </div>
+        <button class="nav-btn next" id="next-btn" aria-label="下一张">&#10095;</button>
+      </div>
+      <div class="dots" id="dots" aria-label="图片导航"></div>
+    </section>
   </main>
+
+  <script>
+    (function () {
+      var track = document.getElementById("track");
+      var status = document.getElementById("gallery-status");
+      var dotsWrap = document.getElementById("dots");
+      var prevBtn = document.getElementById("prev-btn");
+      var nextBtn = document.getElementById("next-btn");
+      var slides = Array.from(track.children);
+      var carousel = document.getElementById("carousel");
+      var total = slides.length;
+      var index = 0;
+      var startX = 0;
+      var deltaX = 0;
+      var dragging = false;
+
+      function pad(num) {
+        return String(num).padStart(2, "0");
+      }
+
+      function setActiveDot() {
+        Array.from(dotsWrap.children).forEach(function (dot, i) {
+          dot.classList.toggle("active", i === index);
+        });
+      }
+
+      function update() {
+        track.style.transform = "translateX(" + (-index * 100) + "%)";
+        status.textContent = pad(index + 1) + " / " + pad(total);
+        setActiveDot();
+      }
+
+      function go(nextIndex) {
+        index = (nextIndex + total) % total;
+        update();
+      }
+
+      function onPointerDown(event) {
+        dragging = true;
+        startX = event.clientX;
+        deltaX = 0;
+        track.style.transition = "none";
+      }
+
+      function onPointerMove(event) {
+        if (!dragging) {
+          return;
+        }
+        deltaX = event.clientX - startX;
+        var dragPercent = (deltaX / carousel.clientWidth) * 100;
+        track.style.transform = "translateX(" + ((-index * 100) + dragPercent) + "%)";
+      }
+
+      function onPointerUp() {
+        if (!dragging) {
+          return;
+        }
+        dragging = false;
+        track.style.transition = "transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1)";
+        if (Math.abs(deltaX) > 50) {
+          if (deltaX < 0) {
+            go(index + 1);
+          } else {
+            go(index - 1);
+          }
+        } else {
+          update();
+        }
+      }
+
+      slides.forEach(function (_, i) {
+        var dot = document.createElement("button");
+        dot.className = "dot";
+        dot.type = "button";
+        dot.setAttribute("aria-label", "切换到第 " + (i + 1) + " 张");
+        dot.addEventListener("click", function () { go(i); });
+        dotsWrap.appendChild(dot);
+      });
+
+      prevBtn.addEventListener("click", function () { go(index - 1); });
+      nextBtn.addEventListener("click", function () { go(index + 1); });
+
+      track.addEventListener("pointerdown", onPointerDown);
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerUp);
+
+      window.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowLeft") {
+          go(index - 1);
+        }
+        if (event.key === "ArrowRight") {
+          go(index + 1);
+        }
+      });
+
+      update();
+    })();
+  </script>
 </body>
 </html>

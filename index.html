@@ -56,7 +56,7 @@
     }
 
     .headline,
-    .db-card {
+    .auth-card {
       padding: 12px 16px;
       border: 1px solid var(--stroke);
       border-radius: 14px;
@@ -77,52 +77,53 @@
       font-size: 0.92rem;
     }
 
-    .db-title {
+    .auth-title {
       font-size: 0.96rem;
       font-family: "Manrope", sans-serif;
       margin-bottom: 8px;
     }
 
-    .db-form {
+    .auth-form {
       display: grid;
-      grid-template-columns: 1.1fr 1fr 0.8fr auto auto;
+      grid-template-columns: 1fr 1fr auto auto auto;
       gap: 8px;
       align-items: center;
     }
 
-    .db-form input {
+    .auth-form input {
       border: 1px solid var(--stroke);
       border-radius: 8px;
       background: #fff;
       color: var(--ink);
       padding: 8px 10px;
-      font-size: 0.82rem;
+      font-size: 0.84rem;
       font-family: inherit;
       min-width: 0;
     }
 
-    .status-line {
+    .auth-status {
       margin-top: 8px;
       font-size: 0.82rem;
-      color: rgba(31, 45, 34, 0.78);
+      color: rgba(31, 45, 34, 0.8);
+      word-break: break-word;
     }
 
-    .status-line strong {
+    .auth-status strong {
       color: #174232;
     }
 
-    .db-help {
+    .auth-help {
       margin-top: 8px;
       font-size: 0.78rem;
       color: rgba(31, 45, 34, 0.7);
     }
 
-    .db-help summary {
+    .auth-help summary {
       cursor: pointer;
       user-select: none;
     }
 
-    .db-help pre {
+    .auth-help pre {
       margin-top: 8px;
       border: 1px solid var(--stroke);
       border-radius: 8px;
@@ -333,8 +334,8 @@
     }
 
     @media (max-width: 1120px) {
-      .db-form {
-        grid-template-columns: 1fr 1fr;
+      .auth-form {
+        grid-template-columns: 1fr 1fr 1fr;
       }
     }
 
@@ -367,7 +368,7 @@
     }
 
     @media (max-width: 680px) {
-      .db-form {
+      .auth-form {
         grid-template-columns: 1fr;
       }
 
@@ -385,34 +386,54 @@
   <div class="shell">
     <header class="headline">
       <h1>我的旅行足迹地图</h1>
-      <p>中间地图 + 右侧历史记录；点击底部按钮可记录当前位置，支持“全部地点”和“行迹轨迹”两种显示。</p>
+      <p>登录后读取属于你自己的云端记录；支持全部地点、轨迹模式、时间区间筛选和撤回上一次记录。</p>
     </header>
 
-    <section class="db-card" aria-label="数据库连接">
-      <h2 class="db-title">云数据库连接（Supabase）</h2>
-      <div class="db-form">
-        <input id="db-url" type="text" placeholder="Supabase URL，例如 https://xxx.supabase.co">
-        <input id="db-key" type="text" placeholder="Supabase anon key（公开 key）">
-        <input id="traveler-id" type="text" placeholder="你的 ID，例如 corey">
-        <button id="connect-db-btn" class="btn-main" type="button">连接数据库</button>
-        <button id="reload-db-btn" class="btn-plain" type="button">刷新云端数据</button>
+    <section class="auth-card" aria-label="登录区">
+      <h2 class="auth-title">账号登录（Supabase Auth）</h2>
+      <div class="auth-form">
+        <input id="auth-email" type="email" placeholder="邮箱" autocomplete="email">
+        <input id="auth-password" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password">
+        <button id="signup-btn" class="btn-plain" type="button">注册</button>
+        <button id="signin-btn" class="btn-main" type="button">登录</button>
+        <button id="signout-btn" class="btn-danger" type="button" disabled>退出登录</button>
       </div>
-      <p id="db-status" class="status-line">数据库状态：<strong>未连接</strong></p>
-      <details class="db-help">
-        <summary>展开查看一次性建表 SQL</summary>
-        <pre>create table if not exists public.travel_points (
+      <p id="auth-status" class="auth-status">登录状态：<strong>未登录</strong></p>
+      <details class="auth-help">
+        <summary>展开查看建表 SQL（user_id 绑定登录用户）</summary>
+        <pre>create extension if not exists pgcrypto;
+
+create table if not exists public.travel_points (
   id uuid primary key default gen_random_uuid(),
-  traveler_id text not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
   lat double precision not null,
   lng double precision not null,
   visited_at timestamptz not null default now(),
   created_at timestamptz not null default now()
 );
 
-create index if not exists idx_travel_points_traveler_time
-on public.travel_points (traveler_id, visited_at);
+create index if not exists idx_travel_points_user_time
+on public.travel_points (user_id, visited_at desc);
 
-alter table public.travel_points disable row level security;</pre>
+alter table public.travel_points enable row level security;
+
+create policy "Users can read own points"
+on public.travel_points
+for select
+to authenticated
+using ((select auth.uid()) = user_id);
+
+create policy "Users can insert own points"
+on public.travel_points
+for insert
+to authenticated
+with check ((select auth.uid()) = user_id);
+
+create policy "Users can delete own points"
+on public.travel_points
+for delete
+to authenticated
+using ((select auth.uid()) = user_id);</pre>
       </details>
     </section>
 
@@ -452,7 +473,7 @@ alter table public.travel_points disable row level security;</pre>
       <button id="record-btn" class="btn-main" type="button" disabled>记录我当前的位置</button>
       <button id="undo-btn" class="btn-danger" type="button" disabled>撤回上一次记录</button>
     </div>
-    <p id="status" class="status">请先连接数据库</p>
+    <p id="status" class="status">请先登录</p>
   </div>
 
   <script
@@ -463,19 +484,20 @@ alter table public.travel_points disable row level security;</pre>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (function () {
-      var DB_CONFIG_KEY = "travel_supabase_config_v1";
+      var SUPABASE_URL = "https://czzjoepcuvjkfugxjden.supabase.co";
+      var SUPABASE_ANON_KEY = "sb_publishable_NoBiC-LB6xyxnBNAxdku4A_sSP5Om50";
+
       var points = [];
       var currentMode = "all";
-      var supabaseClient = null;
-      var dbConnected = false;
+      var currentUser = null;
       var isBusy = false;
 
-      var dbUrlInput = document.getElementById("db-url");
-      var dbKeyInput = document.getElementById("db-key");
-      var travelerInput = document.getElementById("traveler-id");
-      var connectDbBtn = document.getElementById("connect-db-btn");
-      var reloadDbBtn = document.getElementById("reload-db-btn");
-      var dbStatus = document.getElementById("db-status");
+      var authEmailInput = document.getElementById("auth-email");
+      var authPasswordInput = document.getElementById("auth-password");
+      var signupBtn = document.getElementById("signup-btn");
+      var signinBtn = document.getElementById("signin-btn");
+      var signoutBtn = document.getElementById("signout-btn");
+      var authStatus = document.getElementById("auth-status");
 
       var startInput = document.getElementById("start-time");
       var endInput = document.getElementById("end-time");
@@ -498,18 +520,35 @@ alter table public.travel_points disable row level security;</pre>
       var markerLayer = L.layerGroup().addTo(map);
       var trackLayer = L.layerGroup().addTo(map);
 
-      applySavedDbConfig();
+      if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        setStatus("Supabase SDK 加载失败，请刷新页面重试", true);
+        return;
+      }
+
+      var supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      });
+
       bindEvents();
+      bindAuthListener();
       render(false);
-      updateActionButtons();
+      initializeSession();
 
       function bindEvents() {
-        connectDbBtn.addEventListener("click", function () {
-          connectDatabase(false);
+        signupBtn.addEventListener("click", function () {
+          signUp();
         });
 
-        reloadDbBtn.addEventListener("click", function () {
-          refreshFromDb();
+        signinBtn.addEventListener("click", function () {
+          signIn();
+        });
+
+        signoutBtn.addEventListener("click", function () {
+          signOut();
         });
 
         applyFilterBtn.addEventListener("click", function () {
@@ -547,102 +586,130 @@ alter table public.travel_points disable row level security;</pre>
         });
       }
 
-      function applySavedDbConfig() {
-        try {
-          var raw = localStorage.getItem(DB_CONFIG_KEY);
-          if (!raw) return;
-          var cfg = JSON.parse(raw);
-          if (cfg && typeof cfg === "object") {
-            dbUrlInput.value = cfg.url || "";
-            dbKeyInput.value = cfg.key || "";
-            travelerInput.value = cfg.travelerId || "";
-            if (cfg.url && cfg.key && cfg.travelerId) {
-              connectDatabase(true);
-            }
+      function bindAuthListener() {
+        supabaseClient.auth.onAuthStateChange(function (_event, session) {
+          currentUser = session ? session.user : null;
+          setAuthStatus();
+          updateActionButtons();
+
+          if (currentUser) {
+            fetchPointsFromDb().then(function () {
+              setStatus("已登录并同步你的记录", false);
+            }).catch(function (error) {
+              setStatus("读取云端数据失败：" + toErrorMessage(error), true);
+            });
+          } else {
+            points = [];
+            render(false);
           }
-        } catch (e) {
-          setStatus("本地数据库配置读取失败，请重新输入", true);
-        }
+        });
       }
 
-      function saveDbConfig() {
-        var cfg = {
-          url: dbUrlInput.value.trim(),
-          key: dbKeyInput.value.trim(),
-          travelerId: travelerInput.value.trim()
-        };
-        localStorage.setItem(DB_CONFIG_KEY, JSON.stringify(cfg));
-      }
-
-      async function connectDatabase(silent) {
-        var url = dbUrlInput.value.trim();
-        var key = dbKeyInput.value.trim();
-        var travelerId = travelerInput.value.trim();
-
-        if (!url || !key || !travelerId) {
-          setDbStatus(false, "未连接");
-          setStatus("请填写 Supabase URL、anon key、你的 ID", true);
-          return;
-        }
-
-        setBusy(true, "连接数据库...");
-        saveDbConfig();
-
+      async function initializeSession() {
+        setBusy(true, "检查登录状态...");
         try {
-          supabaseClient = window.supabase.createClient(url, key, {
-            auth: { persistSession: false }
-          });
-
-          var result = await supabaseClient
-            .from("travel_points")
-            .select("id", { count: "exact", head: true })
-            .eq("traveler_id", travelerId)
-            .limit(1);
-
-          if (result.error) {
-            throw result.error;
+          var sessionResult = await supabaseClient.auth.getSession();
+          if (sessionResult.error) {
+            throw sessionResult.error;
           }
 
-          dbConnected = true;
-          setDbStatus(true, "已连接（ID: " + travelerId + "）");
-          await fetchPointsFromDb();
+          currentUser = sessionResult.data.session ? sessionResult.data.session.user : null;
+          setAuthStatus();
 
-          if (!silent) {
-            setStatus("数据库已连接，已同步云端记录", false);
+          if (currentUser) {
+            await fetchPointsFromDb();
+            setStatus("已恢复登录状态，并同步云端记录", false);
+          } else {
+            setStatus("请先登录后记录位置", false);
           }
         } catch (error) {
-          dbConnected = false;
-          supabaseClient = null;
-          setDbStatus(false, "连接失败");
-          setStatus("数据库连接失败：" + toErrorMessage(error), true);
+          setStatus("会话初始化失败：" + toErrorMessage(error), true);
         } finally {
           setBusy(false);
         }
       }
 
-      async function refreshFromDb() {
-        if (!dbConnected || !supabaseClient) {
-          setStatus("请先连接数据库", true);
-          return;
-        }
+      async function signUp() {
+        var creds = readCredentials();
+        if (!creds) return;
 
-        setBusy(true, "同步云端数据...");
+        setBusy(true, "注册中...");
         try {
-          await fetchPointsFromDb();
-          setStatus("云端数据已刷新", false);
+          var result = await supabaseClient.auth.signUp({
+            email: creds.email,
+            password: creds.password
+          });
+
+          if (result.error) {
+            throw result.error;
+          }
+
+          if (result.data && result.data.session) {
+            setStatus("注册并登录成功", false);
+          } else {
+            setStatus("注册成功，请前往邮箱完成验证后再登录", false);
+          }
         } catch (error) {
-          setStatus("刷新失败：" + toErrorMessage(error), true);
+          setStatus("注册失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function signIn() {
+        var creds = readCredentials();
+        if (!creds) return;
+
+        setBusy(true, "登录中...");
+        try {
+          var result = await supabaseClient.auth.signInWithPassword({
+            email: creds.email,
+            password: creds.password
+          });
+
+          if (result.error) {
+            throw result.error;
+          }
+
+          setStatus("登录成功", false);
+        } catch (error) {
+          setStatus("登录失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function signOut() {
+        setBusy(true, "退出登录中...");
+        try {
+          var result = await supabaseClient.auth.signOut();
+          if (result.error) {
+            throw result.error;
+          }
+
+          currentUser = null;
+          points = [];
+          render(false);
+          setAuthStatus();
+          setStatus("已退出登录", false);
+        } catch (error) {
+          setStatus("退出登录失败：" + toErrorMessage(error), true);
         } finally {
           setBusy(false);
         }
       }
 
       async function fetchPointsFromDb() {
-        var travelerId = travelerInput.value.trim();
+        if (!currentUser) {
+          points = [];
+          render(false);
+          return;
+        }
+
         var result = await supabaseClient
           .from("travel_points")
           .select("id, lat, lng, visited_at")
-          .eq("traveler_id", travelerId)
+          .eq("user_id", currentUser.id)
           .order("visited_at", { ascending: true });
 
         if (result.error) {
@@ -659,11 +726,12 @@ alter table public.travel_points disable row level security;</pre>
         });
 
         render(false);
+        updateActionButtons();
       }
 
       async function addCurrentLocation() {
-        if (!dbConnected || !supabaseClient) {
-          setStatus("请先连接数据库", true);
+        if (!currentUser) {
+          setStatus("请先登录", true);
           return;
         }
 
@@ -677,7 +745,6 @@ alter table public.travel_points disable row level security;</pre>
         navigator.geolocation.getCurrentPosition(
           async function (pos) {
             try {
-              var travelerId = travelerInput.value.trim();
               var lat = Number(pos.coords.latitude.toFixed(6));
               var lng = Number(pos.coords.longitude.toFixed(6));
               var visitedAt = new Date().toISOString();
@@ -685,7 +752,7 @@ alter table public.travel_points disable row level security;</pre>
               var result = await supabaseClient
                 .from("travel_points")
                 .insert({
-                  traveler_id: travelerId,
+                  user_id: currentUser.id,
                   lat: lat,
                   lng: lng,
                   visited_at: visitedAt
@@ -706,6 +773,7 @@ alter table public.travel_points disable row level security;</pre>
               points.sort(function (a, b) { return a.timestamp - b.timestamp; });
 
               render(true);
+              updateActionButtons();
               setStatus("已记录：" + formatDateTime(Date.now()), false);
             } catch (error) {
               setStatus("保存失败：" + toErrorMessage(error), true);
@@ -730,8 +798,8 @@ alter table public.travel_points disable row level security;</pre>
       }
 
       async function undoLastRecord() {
-        if (!dbConnected || !supabaseClient) {
-          setStatus("请先连接数据库", true);
+        if (!currentUser) {
+          setStatus("请先登录", true);
           return;
         }
 
@@ -744,12 +812,11 @@ alter table public.travel_points disable row level security;</pre>
         setBusy(true, "撤回中...");
 
         try {
-          var travelerId = travelerInput.value.trim();
           var result = await supabaseClient
             .from("travel_points")
             .delete()
             .eq("id", latest.id)
-            .eq("traveler_id", travelerId);
+            .eq("user_id", currentUser.id);
 
           if (result.error) {
             throw result.error;
@@ -760,12 +827,30 @@ alter table public.travel_points disable row level security;</pre>
           });
 
           render(false);
+          updateActionButtons();
           setStatus("已撤回最后一条记录：" + formatDateTime(latest.timestamp), false);
         } catch (error) {
           setStatus("撤回失败：" + toErrorMessage(error), true);
         } finally {
           setBusy(false);
         }
+      }
+
+      function readCredentials() {
+        var email = authEmailInput.value.trim();
+        var password = authPasswordInput.value;
+
+        if (!email || !password) {
+          setStatus("请输入邮箱和密码", true);
+          return null;
+        }
+
+        if (password.length < 6) {
+          setStatus("密码至少 6 位", true);
+          return null;
+        }
+
+        return { email: email, password: password };
       }
 
       function getFilteredPoints() {
@@ -834,7 +919,9 @@ alter table public.travel_points disable row level security;</pre>
         if (!filtered.length) {
           var empty = document.createElement("li");
           empty.className = "empty";
-          empty.textContent = "当前没有符合条件的记录。连接数据库后点击底部按钮开始记录。";
+          empty.textContent = currentUser
+            ? "当前没有符合条件的记录。点击底部按钮开始记录。"
+            : "请先登录后查看和记录你自己的足迹。";
           historyList.appendChild(empty);
           return;
         }
@@ -877,14 +964,17 @@ alter table public.travel_points disable row level security;</pre>
         map.fitBounds(bounds, { padding: [42, 42], maxZoom: 14 });
       }
 
+      function setAuthStatus() {
+        if (!currentUser) {
+          authStatus.innerHTML = "登录状态：<strong>未登录</strong>";
+          return;
+        }
+        authStatus.innerHTML = "登录状态：<strong>已登录</strong>（" + currentUser.email + "）";
+      }
+
       function setStatus(text, isWarn) {
         statusText.textContent = text;
         statusText.classList.toggle("warn", Boolean(isWarn));
-      }
-
-      function setDbStatus(isConnected, label) {
-        dbStatus.innerHTML = "数据库状态：<strong>" + label + "</strong>";
-        dbStatus.style.color = isConnected ? "#174232" : "rgba(31, 45, 34, 0.78)";
       }
 
       function setBusy(busy, text) {
@@ -896,11 +986,12 @@ alter table public.travel_points disable row level security;</pre>
       }
 
       function updateActionButtons() {
-        var canOperate = dbConnected && !isBusy;
-        connectDbBtn.disabled = isBusy;
-        reloadDbBtn.disabled = !dbConnected || isBusy;
-        recordBtn.disabled = !canOperate;
-        undoBtn.disabled = !canOperate || points.length === 0;
+        var isLoggedIn = Boolean(currentUser);
+        signupBtn.disabled = isBusy || isLoggedIn;
+        signinBtn.disabled = isBusy || isLoggedIn;
+        signoutBtn.disabled = isBusy || !isLoggedIn;
+        recordBtn.disabled = isBusy || !isLoggedIn;
+        undoBtn.disabled = isBusy || !isLoggedIn || points.length === 0;
       }
 
       function toErrorMessage(error) {

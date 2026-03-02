@@ -58,9 +58,11 @@
     .headline,
     .auth-card,
     .filters-card,
+    .journey-card,
     .map-card,
     .history-card,
-    .modal-panel {
+    .modal-panel,
+    .journey-banner {
       border: 1px solid var(--stroke);
       border-radius: 14px;
       background: var(--card);
@@ -79,6 +81,24 @@
       letter-spacing: 0.02em;
     }
 
+    .journey-banner {
+      padding: 10px 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .journey-banner[hidden] {
+      display: none;
+    }
+
+    .journey-banner span {
+      font-size: 0.84rem;
+      color: rgba(31, 45, 34, 0.88);
+      font-weight: 700;
+    }
+
     .workspace {
       display: grid;
       grid-template-columns: 300px minmax(0, 1fr) 320px;
@@ -92,7 +112,8 @@
     }
 
     .auth-card,
-    .filters-card {
+    .filters-card,
+    .journey-card {
       padding: 12px;
     }
 
@@ -122,7 +143,10 @@
     }
 
     .auth-actions,
-    .modal-actions {
+    .modal-actions,
+    .journey-actions,
+    .range-actions,
+    .mode-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
@@ -130,7 +154,8 @@
 
     .auth-status,
     .auth-message,
-    .modal-message {
+    .modal-message,
+    .journey-summary {
       margin-top: 8px;
       font-size: 0.82rem;
       line-height: 1.45;
@@ -138,6 +163,7 @@
       word-break: break-word;
     }
 
+    .journey-summary strong,
     .auth-status strong {
       color: #174232;
     }
@@ -147,7 +173,8 @@
       color: var(--warn);
     }
 
-    .filters-form label {
+    .filters-form label,
+    .modal-form label {
       font-size: 0.8rem;
       color: rgba(31, 45, 34, 0.75);
     }
@@ -202,11 +229,10 @@
       color: var(--ink);
     }
 
-    .mode-row,
-    .range-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+    .btn-mini {
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      border-radius: 8px;
     }
 
     .mode-btn {
@@ -285,13 +311,9 @@
     .history-actions {
       margin-top: 6px;
       display: flex;
+      gap: 6px;
       justify-content: flex-end;
-    }
-
-    .btn-mini {
-      padding: 5px 8px;
-      font-size: 0.75rem;
-      border-radius: 8px;
+      flex-wrap: wrap;
     }
 
     .empty {
@@ -352,8 +374,10 @@
     }
 
     .modal-panel {
-      width: min(460px, 100%);
+      width: min(900px, 100%);
       padding: 14px;
+      max-height: 88vh;
+      overflow: auto;
     }
 
     .modal-head {
@@ -367,6 +391,72 @@
       color: rgba(31, 45, 34, 0.78);
       margin-bottom: 10px;
       line-height: 1.45;
+    }
+
+    .picker-list,
+    .journeys-list,
+    .journey-points-list {
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.86);
+      padding: 8px;
+      max-height: 280px;
+      overflow: auto;
+      display: grid;
+      gap: 6px;
+    }
+
+    .picker-item,
+    .journey-point-row {
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #fff;
+      font-size: 0.81rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+    }
+
+    .picker-item label {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      cursor: pointer;
+      align-items: flex-start;
+      line-height: 1.35;
+    }
+
+    .journey-row {
+      border: 1px solid var(--stroke);
+      border-radius: 10px;
+      padding: 8px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+    }
+
+    .journey-row-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .journey-row-head strong {
+      font-size: 0.88rem;
+    }
+
+    .journey-row-head span {
+      font-size: 0.76rem;
+      color: rgba(31, 45, 34, 0.72);
+    }
+
+    .journey-row-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .track-arrow-icon {
@@ -416,10 +506,16 @@
 
     @media (max-width: 640px) {
       .auth-actions,
+      .journey-actions,
       .modal-actions,
       .mode-row,
       .range-actions {
         grid-template-columns: 1fr;
+      }
+
+      .journey-row-actions {
+        flex-direction: column;
+        align-items: stretch;
       }
 
       .action-bar {
@@ -438,6 +534,11 @@
       <h1>人生足迹</h1>
     </header>
 
+    <section id="journey-view-banner" class="journey-banner" hidden>
+      <span id="journey-view-text">当前旅程：</span>
+      <button id="exit-journey-view-btn" class="btn-plain" type="button">退出旅程视图</button>
+    </section>
+
     <main class="workspace">
       <aside class="left-panel" aria-label="左侧控制区">
         <section class="auth-card" aria-label="登录区">
@@ -453,6 +554,15 @@
           </div>
           <p id="auth-status" class="auth-status">登录状态：<strong>未登录</strong></p>
           <p id="auth-message" class="auth-message">提示：未登录时只能浏览空地图，登录后可读取并记录你的足迹。</p>
+        </section>
+
+        <section class="journey-card" aria-label="我的旅程">
+          <h2 class="card-title">我的旅程</h2>
+          <div class="journey-actions">
+            <button id="open-create-journey-btn" class="btn-main" type="button" disabled>添加新的旅程</button>
+            <button id="open-my-journeys-btn" class="btn-plain" type="button" disabled>我的旅程</button>
+          </div>
+          <p id="journey-summary" class="journey-summary">当前共有 <strong>0</strong> 个旅程</p>
         </section>
 
         <section class="filters-card" aria-label="筛选区">
@@ -497,7 +607,7 @@
   </div>
 
   <section id="signup-modal" class="modal" aria-label="注册弹窗" aria-hidden="true">
-    <div class="modal-panel">
+    <div class="modal-panel" style="max-width:460px;">
       <h3 class="modal-head">注册新账号</h3>
       <p class="modal-sub">请输入邮箱和两次一致的密码，创建账号后可直接登录使用。</p>
       <div class="modal-form">
@@ -510,6 +620,45 @@
         </div>
       </div>
       <p id="signup-message" class="modal-message">注册成功后会自动尝试登录。</p>
+    </div>
+  </section>
+
+  <section id="journey-editor-modal" class="modal" aria-label="旅程编辑弹窗" aria-hidden="true">
+    <div class="modal-panel">
+      <h3 id="journey-editor-title" class="modal-head">添加新的旅程</h3>
+      <p id="journey-editor-sub" class="modal-sub">选择地点并保存到旅程，地点顺序按到达时间自动排序。</p>
+      <div class="modal-form">
+        <div id="journey-name-wrap">
+          <label for="journey-name-input">旅程名称</label>
+          <input id="journey-name-input" type="text" placeholder="例如：华盛顿周末" maxlength="80">
+        </div>
+        <label for="journey-editor-start">筛选起始时间</label>
+        <input id="journey-editor-start" type="datetime-local">
+        <label for="journey-editor-end">筛选结束时间</label>
+        <input id="journey-editor-end" type="datetime-local">
+        <div class="range-actions">
+          <button id="journey-editor-apply-filter-btn" class="btn-plain" type="button">应用筛选</button>
+          <button id="journey-editor-clear-filter-btn" class="btn-plain" type="button">清空筛选</button>
+        </div>
+        <div id="journey-editor-point-list" class="picker-list"></div>
+        <div class="modal-actions">
+          <button id="journey-editor-save-btn" class="btn-main" type="button">保存</button>
+          <button id="journey-editor-cancel-btn" class="btn-plain" type="button">取消</button>
+        </div>
+      </div>
+      <p id="journey-editor-message" class="modal-message">请选择要加入旅程的地点。</p>
+    </div>
+  </section>
+
+  <section id="journeys-modal" class="modal" aria-label="我的旅程弹窗" aria-hidden="true">
+    <div class="modal-panel">
+      <h3 class="modal-head">我的旅程</h3>
+      <p class="modal-sub">在此管理旅程：显示路径、添加地点、重命名、删除、移除地点。</p>
+      <div id="journeys-modal-list" class="journeys-list"></div>
+      <div class="modal-actions" style="margin-top:10px;">
+        <button id="journeys-modal-close-btn" class="btn-plain" type="button">关闭</button>
+      </div>
+      <p id="journeys-modal-message" class="modal-message"></p>
     </div>
   </section>
 
@@ -526,12 +675,27 @@
       var PLACE_CACHE_KEY = "travel_place_cache_v1";
 
       var points = [];
+      var journeys = [];
+      var journeyPointMap = {};
+      var activeJourneyView = null;
+      var journeyEditorState = {
+        mode: "create",
+        targetJourneyId: null,
+        selectedPointIds: {},
+        start: "",
+        end: ""
+      };
+
       var currentMode = "all";
       var currentUser = null;
       var isBusy = false;
+
       var dbHasPlaceColumn = true;
       var placeColumnWarned = false;
       var updatePolicyWarned = false;
+      var journeyTableWarned = false;
+      var journeyPolicyWarned = false;
+
       var placeCache = loadPlaceCache();
       var placeLookupInFlight = {};
       var pointResolveInFlight = {};
@@ -544,6 +708,13 @@
       var authStatus = document.getElementById("auth-status");
       var authMessage = document.getElementById("auth-message");
 
+      var journeySummary = document.getElementById("journey-summary");
+      var openCreateJourneyBtn = document.getElementById("open-create-journey-btn");
+      var openMyJourneysBtn = document.getElementById("open-my-journeys-btn");
+      var journeyViewBanner = document.getElementById("journey-view-banner");
+      var journeyViewText = document.getElementById("journey-view-text");
+      var exitJourneyViewBtn = document.getElementById("exit-journey-view-btn");
+
       var signupModal = document.getElementById("signup-modal");
       var signupEmailInput = document.getElementById("signup-email");
       var signupPasswordInput = document.getElementById("signup-password");
@@ -551,6 +722,25 @@
       var signupSubmitBtn = document.getElementById("signup-submit-btn");
       var signupCancelBtn = document.getElementById("signup-cancel-btn");
       var signupMessage = document.getElementById("signup-message");
+
+      var journeyEditorModal = document.getElementById("journey-editor-modal");
+      var journeyEditorTitle = document.getElementById("journey-editor-title");
+      var journeyEditorSub = document.getElementById("journey-editor-sub");
+      var journeyNameWrap = document.getElementById("journey-name-wrap");
+      var journeyNameInput = document.getElementById("journey-name-input");
+      var journeyEditorStart = document.getElementById("journey-editor-start");
+      var journeyEditorEnd = document.getElementById("journey-editor-end");
+      var journeyEditorApplyFilterBtn = document.getElementById("journey-editor-apply-filter-btn");
+      var journeyEditorClearFilterBtn = document.getElementById("journey-editor-clear-filter-btn");
+      var journeyEditorPointList = document.getElementById("journey-editor-point-list");
+      var journeyEditorSaveBtn = document.getElementById("journey-editor-save-btn");
+      var journeyEditorCancelBtn = document.getElementById("journey-editor-cancel-btn");
+      var journeyEditorMessage = document.getElementById("journey-editor-message");
+
+      var journeysModal = document.getElementById("journeys-modal");
+      var journeysModalList = document.getElementById("journeys-modal-list");
+      var journeysModalCloseBtn = document.getElementById("journeys-modal-close-btn");
+      var journeysModalMessage = document.getElementById("journeys-modal-message");
 
       var startInput = document.getElementById("start-time");
       var endInput = document.getElementById("end-time");
@@ -590,6 +780,8 @@
       bindEvents();
       bindAuthListener();
       render(false);
+      renderJourneySummary();
+      renderJourneyBanner();
       initializeSession();
       window.addEventListener("resize", function () {
         map.invalidateSize();
@@ -619,6 +811,56 @@
         signupModal.addEventListener("click", function (event) {
           if (event.target === signupModal) {
             closeSignupModal();
+          }
+        });
+
+        openCreateJourneyBtn.addEventListener("click", function () {
+          openJourneyEditor("create", null);
+        });
+
+        openMyJourneysBtn.addEventListener("click", function () {
+          openJourneysModal();
+        });
+
+        exitJourneyViewBtn.addEventListener("click", function () {
+          clearActiveJourneyView();
+        });
+
+        journeyEditorApplyFilterBtn.addEventListener("click", function () {
+          journeyEditorState.start = journeyEditorStart.value;
+          journeyEditorState.end = journeyEditorEnd.value;
+          renderJourneyEditorPointList();
+        });
+
+        journeyEditorClearFilterBtn.addEventListener("click", function () {
+          journeyEditorState.start = "";
+          journeyEditorState.end = "";
+          journeyEditorStart.value = "";
+          journeyEditorEnd.value = "";
+          renderJourneyEditorPointList();
+        });
+
+        journeyEditorSaveBtn.addEventListener("click", function () {
+          saveJourneyEditor();
+        });
+
+        journeyEditorCancelBtn.addEventListener("click", function () {
+          closeJourneyEditor();
+        });
+
+        journeyEditorModal.addEventListener("click", function (event) {
+          if (event.target === journeyEditorModal) {
+            closeJourneyEditor();
+          }
+        });
+
+        journeysModalCloseBtn.addEventListener("click", function () {
+          closeJourneysModal();
+        });
+
+        journeysModal.addEventListener("click", function (event) {
+          if (event.target === journeysModal) {
+            closeJourneysModal();
           }
         });
 
@@ -661,17 +903,28 @@
         supabaseClient.auth.onAuthStateChange(function (_event, session) {
           currentUser = session ? session.user : null;
           setAuthStatus();
-          updateActionButtons();
 
           if (currentUser) {
-            fetchPointsFromDb().then(function () {
-              setStatus("已登录并同步你的记录", false);
-            }).catch(function (error) {
-              setStatus("读取云端数据失败：" + toErrorMessage(error), true);
-            });
+            syncAllData()
+              .then(function () {
+                setStatus("已登录并同步你的记录", false);
+              })
+              .catch(function (error) {
+                setStatus("读取云端数据失败：" + toErrorMessage(error), true);
+              })
+              .finally(function () {
+                updateActionButtons();
+              });
           } else {
             points = [];
+            journeys = [];
+            journeyPointMap = {};
+            activeJourneyView = null;
+            renderJourneySummary();
+            renderJourneyBanner();
+            renderJourneysModalList();
             render(false);
+            updateActionButtons();
           }
         });
       }
@@ -688,7 +941,7 @@
           setAuthStatus();
 
           if (currentUser) {
-            await fetchPointsFromDb();
+            await syncAllData();
             setStatus("已恢复登录状态，并同步云端记录", false);
           } else {
             setStatus("请先登录后记录位置", false);
@@ -699,6 +952,17 @@
         } finally {
           setBusy(false);
         }
+      }
+
+      async function syncAllData() {
+        await fetchPointsFromDb();
+        await fetchJourneysFromDb();
+        ensureActiveJourneyValid();
+        hydrateMissingPlaceNames(points);
+        renderJourneySummary();
+        renderJourneyBanner();
+        renderJourneysModalList();
+        render(false);
       }
 
       function openSignupModal() {
@@ -834,7 +1098,13 @@
 
           currentUser = null;
           points = [];
+          journeys = [];
+          journeyPointMap = {};
+          activeJourneyView = null;
           render(false);
+          renderJourneySummary();
+          renderJourneyBanner();
+          renderJourneysModalList();
           setAuthStatus();
           setStatus("已退出登录", false);
           setAuthMessage("已退出登录", false);
@@ -850,7 +1120,6 @@
       async function fetchPointsFromDb() {
         if (!currentUser) {
           points = [];
-          render(false);
           return;
         }
 
@@ -897,10 +1166,568 @@
             placeName: row.place_name || ""
           };
         });
+      }
 
+      async function fetchJourneysFromDb() {
+        if (!currentUser) {
+          journeys = [];
+          journeyPointMap = {};
+          return;
+        }
+
+        var journeyRows = await supabaseClient
+          .from("travel_journeys")
+          .select("id, user_id, name, created_at, updated_at")
+          .eq("user_id", currentUser.id)
+          .order("created_at", { ascending: false });
+
+        if (journeyRows.error) {
+          handleJourneyDbError(journeyRows.error);
+          journeys = [];
+          journeyPointMap = {};
+          return;
+        }
+
+        var linkRows = await supabaseClient
+          .from("travel_journey_points")
+          .select("journey_id, point_id, user_id")
+          .eq("user_id", currentUser.id);
+
+        if (linkRows.error) {
+          handleJourneyDbError(linkRows.error);
+          journeys = journeyRows.data || [];
+          journeyPointMap = {};
+          return;
+        }
+
+        journeys = (journeyRows.data || []).map(function (row) {
+          return {
+            id: row.id,
+            userId: row.user_id,
+            name: row.name,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+          };
+        });
+
+        var mapObj = {};
+        (linkRows.data || []).forEach(function (row) {
+          if (!mapObj[row.journey_id]) {
+            mapObj[row.journey_id] = [];
+          }
+          if (mapObj[row.journey_id].indexOf(row.point_id) === -1) {
+            mapObj[row.journey_id].push(row.point_id);
+          }
+        });
+
+        journeyPointMap = mapObj;
+      }
+
+      async function createJourney(name, pointIds) {
+        var insertJourney = await supabaseClient
+          .from("travel_journeys")
+          .insert({ user_id: currentUser.id, name: name })
+          .select("id")
+          .single();
+
+        if (insertJourney.error) {
+          handleJourneyDbError(insertJourney.error);
+          throw insertJourney.error;
+        }
+
+        var journeyId = insertJourney.data.id;
+
+        if (pointIds && pointIds.length) {
+          await addPointsToJourney(journeyId, pointIds);
+        }
+
+        return journeyId;
+      }
+
+      async function renameJourney(journeyId, newName) {
+        var result = await supabaseClient
+          .from("travel_journeys")
+          .update({ name: newName, updated_at: new Date().toISOString() })
+          .eq("id", journeyId)
+          .eq("user_id", currentUser.id);
+
+        if (result.error) {
+          handleJourneyDbError(result.error);
+          throw result.error;
+        }
+      }
+
+      async function deleteJourney(journeyId) {
+        var result = await supabaseClient
+          .from("travel_journeys")
+          .delete()
+          .eq("id", journeyId)
+          .eq("user_id", currentUser.id);
+
+        if (result.error) {
+          handleJourneyDbError(result.error);
+          throw result.error;
+        }
+      }
+
+      async function addPointsToJourney(journeyId, pointIds) {
+        if (!pointIds || !pointIds.length) return;
+
+        var rows = pointIds.map(function (pointId) {
+          return {
+            journey_id: journeyId,
+            point_id: pointId,
+            user_id: currentUser.id
+          };
+        });
+
+        var result = await supabaseClient
+          .from("travel_journey_points")
+          .upsert(rows, { onConflict: "journey_id,point_id", ignoreDuplicates: true });
+
+        if (result.error) {
+          handleJourneyDbError(result.error);
+          throw result.error;
+        }
+      }
+
+      async function removePointFromJourney(journeyId, pointId) {
+        var result = await supabaseClient
+          .from("travel_journey_points")
+          .delete()
+          .eq("journey_id", journeyId)
+          .eq("point_id", pointId)
+          .eq("user_id", currentUser.id);
+
+        if (result.error) {
+          handleJourneyDbError(result.error);
+          throw result.error;
+        }
+      }
+
+      function openJourneyEditor(mode, journeyId) {
+        if (!currentUser) {
+          setStatus("请先登录", true);
+          return;
+        }
+
+        journeyEditorState.mode = mode;
+        journeyEditorState.targetJourneyId = journeyId;
+        journeyEditorState.selectedPointIds = {};
+        journeyEditorState.start = "";
+        journeyEditorState.end = "";
+
+        journeyEditorStart.value = "";
+        journeyEditorEnd.value = "";
+
+        if (mode === "create") {
+          journeyEditorTitle.textContent = "添加新的旅程";
+          journeyEditorSub.textContent = "输入旅程名并选择地点，路径将按到达时间自动排序。";
+          journeyNameWrap.hidden = false;
+          journeyNameInput.value = "";
+          journeyEditorSaveBtn.textContent = "创建旅程";
+        } else {
+          var target = findJourneyById(journeyId);
+          journeyEditorTitle.textContent = "添加地点到旅程";
+          journeyEditorSub.textContent = target ? ("旅程：" + target.name) : "请选择地点";
+          journeyNameWrap.hidden = true;
+          journeyEditorSaveBtn.textContent = "添加地点";
+        }
+
+        setJourneyEditorMessage("请选择地点。", false);
+        renderJourneyEditorPointList();
+        journeyEditorModal.classList.add("open");
+        journeyEditorModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeJourneyEditor() {
+        journeyEditorModal.classList.remove("open");
+        journeyEditorModal.setAttribute("aria-hidden", "true");
+      }
+
+      function openJourneysModal() {
+        if (!currentUser) {
+          setStatus("请先登录", true);
+          return;
+        }
+
+        renderJourneysModalList();
+        setJourneysModalMessage("", false);
+        journeysModal.classList.add("open");
+        journeysModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeJourneysModal() {
+        journeysModal.classList.remove("open");
+        journeysModal.setAttribute("aria-hidden", "true");
+      }
+
+      function getJourneyEditorCandidatePoints() {
+        var start = journeyEditorState.start ? new Date(journeyEditorState.start).getTime() : null;
+        var end = journeyEditorState.end ? new Date(journeyEditorState.end).getTime() : null;
+
+        return points.filter(function (p) {
+          var okStart = start === null || p.timestamp >= start;
+          var okEnd = end === null || p.timestamp <= end;
+          return okStart && okEnd;
+        }).sort(function (a, b) {
+          return b.timestamp - a.timestamp;
+        });
+      }
+
+      function renderJourneyEditorPointList() {
+        journeyEditorPointList.innerHTML = "";
+
+        var candidates = getJourneyEditorCandidatePoints();
+        if (!candidates.length) {
+          var empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "当前筛选条件下没有可选地点。";
+          journeyEditorPointList.appendChild(empty);
+          return;
+        }
+
+        var existingMap = {};
+        if (journeyEditorState.mode === "add" && journeyEditorState.targetJourneyId) {
+          (journeyPointMap[journeyEditorState.targetJourneyId] || []).forEach(function (id) {
+            existingMap[id] = true;
+          });
+        }
+
+        candidates.forEach(function (point) {
+          var row = document.createElement("div");
+          row.className = "picker-item";
+
+          var label = document.createElement("label");
+          var cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = Boolean(journeyEditorState.selectedPointIds[point.id]);
+
+          if (existingMap[point.id]) {
+            cb.disabled = true;
+          }
+
+          cb.addEventListener("change", function () {
+            if (cb.checked) {
+              journeyEditorState.selectedPointIds[point.id] = true;
+            } else {
+              delete journeyEditorState.selectedPointIds[point.id];
+            }
+          });
+
+          var text = document.createElement("span");
+          text.textContent =
+            (point.placeName || "地点解析中...") +
+            " | " +
+            formatDateTime(point.timestamp) +
+            " | 纬度 " +
+            point.lat +
+            " 经度 " +
+            point.lng +
+            (existingMap[point.id] ? "（已在该旅程中）" : "");
+
+          label.appendChild(cb);
+          label.appendChild(text);
+          row.appendChild(label);
+          journeyEditorPointList.appendChild(row);
+        });
+      }
+
+      async function saveJourneyEditor() {
+        if (!currentUser) {
+          setJourneyEditorMessage("请先登录", true);
+          return;
+        }
+
+        var selectedIds = Object.keys(journeyEditorState.selectedPointIds);
+
+        if (journeyEditorState.mode === "create") {
+          var journeyName = journeyNameInput.value.trim();
+          if (!journeyName) {
+            setJourneyEditorMessage("请输入旅程名称", true);
+            return;
+          }
+
+          setBusy(true, "创建旅程中...");
+          try {
+            await createJourney(journeyName, selectedIds);
+            await fetchJourneysFromDb();
+            ensureActiveJourneyValid();
+            renderJourneySummary();
+            renderJourneyBanner();
+            renderJourneysModalList();
+            render(false);
+            closeJourneyEditor();
+            setStatus("旅程已创建", false);
+          } catch (error) {
+            setJourneyEditorMessage("创建失败：" + toErrorMessage(error), true);
+          } finally {
+            setBusy(false);
+          }
+        } else {
+          if (!journeyEditorState.targetJourneyId) {
+            setJourneyEditorMessage("未选中目标旅程", true);
+            return;
+          }
+
+          if (!selectedIds.length) {
+            setJourneyEditorMessage("请至少选择一个地点", true);
+            return;
+          }
+
+          setBusy(true, "添加地点中...");
+          try {
+            await addPointsToJourney(journeyEditorState.targetJourneyId, selectedIds);
+            await fetchJourneysFromDb();
+            ensureActiveJourneyValid();
+            renderJourneySummary();
+            renderJourneyBanner();
+            renderJourneysModalList();
+            render(false);
+            closeJourneyEditor();
+            setStatus("地点已加入旅程", false);
+          } catch (error) {
+            setJourneyEditorMessage("添加失败：" + toErrorMessage(error), true);
+          } finally {
+            setBusy(false);
+          }
+        }
+      }
+
+      function renderJourneysModalList() {
+        journeysModalList.innerHTML = "";
+
+        if (!currentUser) {
+          var notLogin = document.createElement("div");
+          notLogin.className = "empty";
+          notLogin.textContent = "请先登录后管理旅程。";
+          journeysModalList.appendChild(notLogin);
+          return;
+        }
+
+        if (!journeys.length) {
+          var empty = document.createElement("div");
+          empty.className = "empty";
+          empty.textContent = "还没有旅程。点击“添加新的旅程”开始创建。";
+          journeysModalList.appendChild(empty);
+          return;
+        }
+
+        journeys.forEach(function (journey) {
+          var row = document.createElement("div");
+          row.className = "journey-row";
+
+          var head = document.createElement("div");
+          head.className = "journey-row-head";
+
+          var nameWrap = document.createElement("div");
+          var strong = document.createElement("strong");
+          strong.textContent = journey.name;
+          var meta = document.createElement("span");
+          var count = (journeyPointMap[journey.id] || []).length;
+          meta.textContent = "地点数：" + count;
+          nameWrap.appendChild(strong);
+          nameWrap.appendChild(meta);
+
+          var actions = document.createElement("div");
+          actions.className = "journey-row-actions";
+
+          var showBtn = document.createElement("button");
+          showBtn.className = "btn-main btn-mini";
+          showBtn.type = "button";
+          showBtn.textContent = "显示该旅程";
+          showBtn.addEventListener("click", function () {
+            activateJourneyView(journey.id);
+            closeJourneysModal();
+          });
+
+          var addBtn = document.createElement("button");
+          addBtn.className = "btn-plain btn-mini";
+          addBtn.type = "button";
+          addBtn.textContent = "添加地点";
+          addBtn.addEventListener("click", function () {
+            openJourneyEditor("add", journey.id);
+          });
+
+          var renameBtn = document.createElement("button");
+          renameBtn.className = "btn-plain btn-mini";
+          renameBtn.type = "button";
+          renameBtn.textContent = "重命名";
+          renameBtn.addEventListener("click", function () {
+            renameJourneyFromUser(journey.id, journey.name);
+          });
+
+          var delBtn = document.createElement("button");
+          delBtn.className = "btn-danger btn-mini";
+          delBtn.type = "button";
+          delBtn.textContent = "删除";
+          delBtn.addEventListener("click", function () {
+            deleteJourneyFromUser(journey.id, journey.name);
+          });
+
+          actions.appendChild(showBtn);
+          actions.appendChild(addBtn);
+          actions.appendChild(renameBtn);
+          actions.appendChild(delBtn);
+
+          head.appendChild(nameWrap);
+          head.appendChild(actions);
+
+          var pointsWrap = document.createElement("div");
+          pointsWrap.className = "journey-points-list";
+          var pointList = getJourneyPoints(journey.id);
+
+          if (!pointList.length) {
+            var none = document.createElement("div");
+            none.className = "empty";
+            none.textContent = "该旅程暂无地点";
+            pointsWrap.appendChild(none);
+          } else {
+            pointList.forEach(function (p) {
+              var pRow = document.createElement("div");
+              pRow.className = "journey-point-row";
+
+              var pText = document.createElement("span");
+              pText.textContent = (p.placeName || "地点解析中...") + " | " + formatDateTime(p.timestamp);
+
+              var removeBtn = document.createElement("button");
+              removeBtn.className = "btn-plain btn-mini";
+              removeBtn.type = "button";
+              removeBtn.textContent = "移除";
+              removeBtn.addEventListener("click", function () {
+                removePointFromJourneyFromUser(journey.id, p.id);
+              });
+
+              pRow.appendChild(pText);
+              pRow.appendChild(removeBtn);
+              pointsWrap.appendChild(pRow);
+            });
+          }
+
+          row.appendChild(head);
+          row.appendChild(pointsWrap);
+          journeysModalList.appendChild(row);
+        });
+      }
+
+      async function renameJourneyFromUser(journeyId, oldName) {
+        var next = window.prompt("请输入新的旅程名称：", oldName || "");
+        if (next === null) return;
+        next = next.trim();
+
+        if (!next) {
+          setJourneysModalMessage("旅程名称不能为空", true);
+          return;
+        }
+
+        setBusy(true, "重命名旅程中...");
+        try {
+          await renameJourney(journeyId, next);
+          await fetchJourneysFromDb();
+          ensureActiveJourneyValid();
+          renderJourneySummary();
+          renderJourneyBanner();
+          renderJourneysModalList();
+          render(false);
+          setStatus("旅程名称已更新", false);
+        } catch (error) {
+          setJourneysModalMessage("重命名失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function deleteJourneyFromUser(journeyId, name) {
+        if (!window.confirm("确认删除旅程「" + name + "」？此操作不可撤销。")) return;
+
+        setBusy(true, "删除旅程中...");
+        try {
+          await deleteJourney(journeyId);
+          await fetchJourneysFromDb();
+          ensureActiveJourneyValid();
+          renderJourneySummary();
+          renderJourneyBanner();
+          renderJourneysModalList();
+          render(false);
+          setStatus("旅程已删除", false);
+        } catch (error) {
+          setJourneysModalMessage("删除失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function removePointFromJourneyFromUser(journeyId, pointId) {
+        setBusy(true, "移除地点中...");
+        try {
+          await removePointFromJourney(journeyId, pointId);
+          await fetchJourneysFromDb();
+          ensureActiveJourneyValid();
+          renderJourneySummary();
+          renderJourneyBanner();
+          renderJourneysModalList();
+          render(false);
+          setStatus("已从旅程移除地点", false);
+        } catch (error) {
+          setJourneysModalMessage("移除失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      function activateJourneyView(journeyId) {
+        var target = findJourneyById(journeyId);
+        if (!target) {
+          setStatus("未找到该旅程", true);
+          return;
+        }
+
+        activeJourneyView = {
+          journeyId: target.id,
+          journeyName: target.name
+        };
+
+        renderJourneyBanner();
         render(false);
-        updateActionButtons();
-        hydrateMissingPlaceNames(points);
+        setStatus("已切换到旅程：" + target.name, false);
+      }
+
+      function clearActiveJourneyView() {
+        activeJourneyView = null;
+        renderJourneyBanner();
+        render(false);
+        setStatus("已退出旅程视图", false);
+      }
+
+      function ensureActiveJourneyValid() {
+        if (!activeJourneyView) return;
+        var target = findJourneyById(activeJourneyView.journeyId);
+        if (!target) {
+          activeJourneyView = null;
+          return;
+        }
+        activeJourneyView.journeyName = target.name;
+      }
+
+      function findJourneyById(journeyId) {
+        for (var i = 0; i < journeys.length; i += 1) {
+          if (journeys[i].id === journeyId) return journeys[i];
+        }
+        return null;
+      }
+
+      function getJourneyPoints(journeyId) {
+        var pointIds = journeyPointMap[journeyId] || [];
+        var idMap = {};
+        pointIds.forEach(function (id) {
+          idMap[id] = true;
+        });
+
+        return points.filter(function (p) {
+          return idMap[p.id];
+        }).sort(function (a, b) {
+          return a.timestamp - b.timestamp;
+        });
       }
 
       async function addCurrentLocation() {
@@ -965,6 +1792,7 @@
               });
               points.sort(function (a, b) { return a.timestamp - b.timestamp; });
 
+              renderJourneysModalList();
               render(true);
               updateActionButtons();
               setStatus("已记录：" + (placeName || "新地点"), false);
@@ -1019,6 +1847,14 @@
             return p.id !== latest.id;
           });
 
+          if (activeJourneyView) {
+            await fetchJourneysFromDb();
+            ensureActiveJourneyValid();
+            renderJourneySummary();
+            renderJourneyBanner();
+            renderJourneysModalList();
+          }
+
           render(false);
           updateActionButtons();
           setStatus("已撤回最后一条记录：" + (latest.placeName || formatDateTime(latest.timestamp)), false);
@@ -1038,6 +1874,7 @@
             .then(function (name) {
               if (!name) return;
               point.placeName = name;
+              renderJourneysModalList();
               render(false);
               if (dbHasPlaceColumn && currentUser) {
                 persistPointPlaceName(point);
@@ -1126,6 +1963,7 @@
           target.placeName = nextName;
           placeCache[target.lat.toFixed(5) + "," + target.lng.toFixed(5)] = nextName;
           savePlaceCache(placeCache);
+          renderJourneysModalList();
           render(false);
           setStatus("地点名已更新", false);
         } catch (error) {
@@ -1235,16 +2073,39 @@
         }
       }
 
+      function handleJourneyDbError(error) {
+        if (isJourneyTableMissingError(error)) {
+          warnJourneyTablesMissing();
+          return;
+        }
+        if (isJourneyPolicyError(error)) {
+          warnJourneyPolicyMissing();
+          return;
+        }
+      }
+
       function warnPlaceColumnMissing() {
         if (placeColumnWarned) return;
         placeColumnWarned = true;
-        setStatus("数据库缺少 place_name 列，无法持久化地点名。请在 Supabase 执行：alter table public.travel_points add column if not exists place_name text;", true);
+        setStatus("数据库缺少 place_name 列，无法持久化地点名。请执行：alter table public.travel_points add column if not exists place_name text;", true);
       }
 
       function warnUpdatePolicyMissing() {
         if (updatePolicyWarned) return;
         updatePolicyWarned = true;
         setStatus("数据库缺少 update 权限策略，无法修改地点名。请执行：create policy \"Users can update own points\" on public.travel_points for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);", true);
+      }
+
+      function warnJourneyTablesMissing() {
+        if (journeyTableWarned) return;
+        journeyTableWarned = true;
+        setStatus("未检测到 v1.1 旅程数据表，请先在 Supabase 执行 v1.1 SQL 迁移。", true);
+      }
+
+      function warnJourneyPolicyMissing() {
+        if (journeyPolicyWarned) return;
+        journeyPolicyWarned = true;
+        setStatus("旅程表 RLS 策略缺失或权限不足，请执行文档中的 v1.1 RLS SQL。", true);
       }
 
       function isMissingPlaceColumnError(error) {
@@ -1255,6 +2116,20 @@
       function isUpdatePolicyError(error) {
         var msg = toErrorMessage(error).toLowerCase();
         return msg.indexOf("permission denied") !== -1 || msg.indexOf("row-level security") !== -1;
+      }
+
+      function isJourneyTableMissingError(error) {
+        var msg = toErrorMessage(error).toLowerCase();
+        var missing = msg.indexOf("does not exist") !== -1;
+        return missing && (
+          msg.indexOf("travel_journeys") !== -1 ||
+          msg.indexOf("travel_journey_points") !== -1
+        );
+      }
+
+      function isJourneyPolicyError(error) {
+        var msg = toErrorMessage(error).toLowerCase();
+        return msg.indexOf("row-level security") !== -1 || msg.indexOf("permission denied") !== -1;
       }
 
       function getFilteredPoints() {
@@ -1268,13 +2143,21 @@
         });
       }
 
+      function getDisplayPoints() {
+        if (!activeJourneyView) {
+          return getFilteredPoints();
+        }
+
+        return getJourneyPoints(activeJourneyView.journeyId);
+      }
+
       function render(focusLatest) {
-        var filtered = getFilteredPoints();
+        var displayPoints = getDisplayPoints();
         markerLayer.clearLayers();
         trackLayer.clearLayers();
 
         if (currentMode === "all") {
-          filtered.forEach(function (p, idx) {
+          displayPoints.forEach(function (p, idx) {
             L.circleMarker([p.lat, p.lng], {
               radius: 7,
               color: "#1f5e48",
@@ -1297,7 +2180,7 @@
               .addTo(markerLayer);
           });
         } else {
-          var latLngs = filtered.map(function (p) {
+          var latLngs = displayPoints.map(function (p) {
             return [p.lat, p.lng];
           });
 
@@ -1311,7 +2194,7 @@
             drawTrackArrows(latLngs);
           }
 
-          filtered.forEach(function (p, idx) {
+          displayPoints.forEach(function (p, idx) {
             L.circleMarker([p.lat, p.lng], {
               radius: 6,
               color: "#8f4b29",
@@ -1335,25 +2218,35 @@
           });
         }
 
-        renderHistory(filtered);
-        adjustMap(filtered, focusLatest);
+        renderHistory(displayPoints);
+        adjustMap(displayPoints, focusLatest);
       }
 
-      function renderHistory(filtered) {
+      function renderHistory(displayPoints) {
         historyList.innerHTML = "";
-        historyMeta.textContent = "总计 " + points.length + " 条记录，当前显示 " + filtered.length + " 条";
 
-        if (!filtered.length) {
+        if (activeJourneyView) {
+          var jname = activeJourneyView.journeyName || "未命名旅程";
+          historyMeta.textContent = "当前旅程：" + jname + "，共 " + displayPoints.length + " 个地点";
+        } else {
+          historyMeta.textContent = "总计 " + points.length + " 条记录，当前显示 " + displayPoints.length + " 条";
+        }
+
+        if (!displayPoints.length) {
           var empty = document.createElement("li");
           empty.className = "empty";
-          empty.textContent = currentUser
-            ? "当前没有符合条件的记录。点击底部按钮开始记录。"
-            : "请先登录后查看和记录你自己的足迹。";
+          if (!currentUser) {
+            empty.textContent = "请先登录后查看和记录你自己的足迹。";
+          } else if (activeJourneyView) {
+            empty.textContent = "该旅程暂无地点。";
+          } else {
+            empty.textContent = "当前没有符合条件的记录。点击底部按钮开始记录。";
+          }
           historyList.appendChild(empty);
           return;
         }
 
-        var reversed = filtered.slice().reverse();
+        var reversed = displayPoints.slice().reverse();
         reversed.forEach(function (p, index) {
           var li = document.createElement("li");
           li.className = "history-item";
@@ -1363,7 +2256,7 @@
 
           var place = document.createElement("p");
           place.className = "place";
-          place.textContent = "#" + (filtered.length - index) + "  " + (p.placeName || "地点解析中...");
+          place.textContent = "#" + (displayPoints.length - index) + "  " + (p.placeName || "地点解析中...");
 
           var coord = document.createElement("p");
           coord.className = "coord";
@@ -1379,8 +2272,18 @@
           renameBtn.addEventListener("click", function () {
             renamePointFromUser(p.id, p.placeName || "");
           });
-
           actions.appendChild(renameBtn);
+
+          if (activeJourneyView) {
+            var removeJourneyBtn = document.createElement("button");
+            removeJourneyBtn.className = "btn-plain btn-mini";
+            removeJourneyBtn.type = "button";
+            removeJourneyBtn.textContent = "从旅程移除";
+            removeJourneyBtn.addEventListener("click", function () {
+              removePointFromJourneyFromUser(activeJourneyView.journeyId, p.id);
+            });
+            actions.appendChild(removeJourneyBtn);
+          }
 
           li.appendChild(t);
           li.appendChild(place);
@@ -1390,24 +2293,24 @@
         });
       }
 
-      function adjustMap(filtered, focusLatest) {
-        if (!filtered.length) {
+      function adjustMap(displayPoints, focusLatest) {
+        if (!displayPoints.length) {
           map.setView([25, 110], 4);
           return;
         }
 
         if (focusLatest) {
-          var latest = filtered[filtered.length - 1];
+          var latest = displayPoints[displayPoints.length - 1];
           map.setView([latest.lat, latest.lng], 13, { animate: true });
           return;
         }
 
-        if (filtered.length === 1) {
-          map.setView([filtered[0].lat, filtered[0].lng], 13);
+        if (displayPoints.length === 1) {
+          map.setView([displayPoints[0].lat, displayPoints[0].lng], 13);
           return;
         }
 
-        var bounds = L.latLngBounds(filtered.map(function (p) { return [p.lat, p.lng]; }));
+        var bounds = L.latLngBounds(displayPoints.map(function (p) { return [p.lat, p.lng]; }));
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       }
 
@@ -1441,6 +2344,19 @@
         return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
       }
 
+      function renderJourneySummary() {
+        journeySummary.innerHTML = "当前共有 <strong>" + journeys.length + "</strong> 个旅程";
+      }
+
+      function renderJourneyBanner() {
+        if (!activeJourneyView) {
+          journeyViewBanner.hidden = true;
+          return;
+        }
+        journeyViewText.textContent = "当前旅程：" + (activeJourneyView.journeyName || "未命名旅程");
+        journeyViewBanner.hidden = false;
+      }
+
       function setAuthStatus() {
         if (!currentUser) {
           authStatus.innerHTML = "登录状态：<strong>未登录</strong>";
@@ -1457,6 +2373,16 @@
       function setSignupMessage(text, isWarn) {
         signupMessage.textContent = text;
         signupMessage.classList.toggle("warn", Boolean(isWarn));
+      }
+
+      function setJourneyEditorMessage(text, isWarn) {
+        journeyEditorMessage.textContent = text;
+        journeyEditorMessage.classList.toggle("warn", Boolean(isWarn));
+      }
+
+      function setJourneysModalMessage(text, isWarn) {
+        journeysModalMessage.textContent = text;
+        journeysModalMessage.classList.toggle("warn", Boolean(isWarn));
       }
 
       function setStatus(text, isWarn) {
@@ -1477,8 +2403,18 @@
         signinBtn.disabled = isBusy || isLoggedIn;
         openSignupBtn.disabled = isBusy || isLoggedIn;
         signoutBtn.disabled = isBusy || !isLoggedIn;
+
         signupSubmitBtn.disabled = isBusy;
         signupCancelBtn.disabled = isBusy;
+
+        openCreateJourneyBtn.disabled = isBusy || !isLoggedIn;
+        openMyJourneysBtn.disabled = isBusy || !isLoggedIn;
+        exitJourneyViewBtn.disabled = isBusy || !activeJourneyView;
+
+        journeyEditorSaveBtn.disabled = isBusy;
+        journeyEditorCancelBtn.disabled = isBusy;
+        journeysModalCloseBtn.disabled = isBusy;
+
         recordBtn.disabled = isBusy || !isLoggedIn;
         undoBtn.disabled = isBusy || !isLoggedIn || points.length === 0;
       }

@@ -59,7 +59,8 @@
     .auth-card,
     .filters-card,
     .map-card,
-    .history-card {
+    .history-card,
+    .modal-panel {
       border: 1px solid var(--stroke);
       border-radius: 14px;
       background: var(--card);
@@ -76,12 +77,6 @@
       font-size: clamp(1.2rem, 2.4vw, 1.8rem);
       font-family: "Manrope", sans-serif;
       letter-spacing: 0.02em;
-    }
-
-    .headline p {
-      margin-top: 6px;
-      color: rgba(31, 45, 34, 0.76);
-      font-size: 0.92rem;
     }
 
     .workspace {
@@ -107,12 +102,15 @@
       margin-bottom: 8px;
     }
 
-    .auth-form {
+    .auth-form,
+    .filters-form,
+    .modal-form {
       display: grid;
       gap: 8px;
     }
 
-    .auth-form input {
+    .auth-form input,
+    .modal-form input {
       border: 1px solid var(--stroke);
       border-radius: 8px;
       background: #fff;
@@ -123,14 +121,16 @@
       min-width: 0;
     }
 
-    .auth-actions {
+    .auth-actions,
+    .modal-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
 
     .auth-status,
-    .auth-message {
+    .auth-message,
+    .modal-message {
       margin-top: 8px;
       font-size: 0.82rem;
       line-height: 1.45;
@@ -142,13 +142,9 @@
       color: #174232;
     }
 
-    .auth-message.warn {
+    .auth-message.warn,
+    .modal-message.warn {
       color: var(--warn);
-    }
-
-    .filters-form {
-      display: grid;
-      gap: 8px;
     }
 
     .filters-form label {
@@ -272,9 +268,18 @@
       margin-bottom: 4px;
     }
 
-    .history-item p {
-      font-size: 0.83rem;
-      line-height: 1.4;
+    .history-item .place {
+      font-size: 0.86rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #184534;
+      margin-bottom: 2px;
+    }
+
+    .history-item .coord {
+      font-size: 0.81rem;
+      line-height: 1.35;
+      color: rgba(31, 45, 34, 0.78);
     }
 
     .empty {
@@ -319,6 +324,39 @@
       color: var(--warn);
     }
 
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 32, 26, 0.32);
+      z-index: 900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal.open {
+      display: flex;
+    }
+
+    .modal-panel {
+      width: min(460px, 100%);
+      padding: 14px;
+    }
+
+    .modal-head {
+      font-size: 1rem;
+      font-family: "Manrope", sans-serif;
+      margin-bottom: 8px;
+    }
+
+    .modal-sub {
+      font-size: 0.82rem;
+      color: rgba(31, 45, 34, 0.78);
+      margin-bottom: 10px;
+      line-height: 1.45;
+    }
+
     @media (max-width: 1180px) {
       .workspace {
         grid-template-columns: 300px minmax(0, 1fr);
@@ -353,10 +391,8 @@
     }
 
     @media (max-width: 640px) {
-      .auth-actions {
-        grid-template-columns: 1fr;
-      }
-
+      .auth-actions,
+      .modal-actions,
       .mode-row,
       .range-actions {
         grid-template-columns: 1fr;
@@ -376,24 +412,23 @@
   <div class="shell">
     <header class="headline">
       <h1>人生足迹</h1>
-      <p>登录后读取属于你自己的云端记录；左侧筛选不会遮挡地图，支持轨迹显示和撤回上一次记录。</p>
     </header>
 
     <main class="workspace">
       <aside class="left-panel" aria-label="左侧控制区">
         <section class="auth-card" aria-label="登录区">
-          <h2 class="card-title">账号登录（Supabase Auth）</h2>
+          <h2 class="card-title">账号登录</h2>
           <div class="auth-form">
             <input id="auth-email" type="email" placeholder="邮箱" autocomplete="email">
             <input id="auth-password" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password">
             <div class="auth-actions">
-              <button id="signup-btn" class="btn-plain" type="button">注册</button>
               <button id="signin-btn" class="btn-main" type="button">登录</button>
+              <button id="open-signup-btn" class="btn-plain" type="button">注册新账号</button>
               <button id="signout-btn" class="btn-danger" type="button" disabled>退出</button>
             </div>
           </div>
           <p id="auth-status" class="auth-status">登录状态：<strong>未登录</strong></p>
-          <p id="auth-message" class="auth-message">提示：注册后请检查邮箱验证邮件（如果你开启了邮箱验证）。</p>
+          <p id="auth-message" class="auth-message">提示：未登录时只能浏览空地图，登录后可读取并记录你的足迹。</p>
         </section>
 
         <section class="filters-card" aria-label="筛选区">
@@ -437,6 +472,23 @@
     <p id="status" class="status">请先登录</p>
   </div>
 
+  <section id="signup-modal" class="modal" aria-label="注册弹窗" aria-hidden="true">
+    <div class="modal-panel">
+      <h3 class="modal-head">注册新账号</h3>
+      <p class="modal-sub">请输入邮箱和两次一致的密码，创建账号后可直接登录使用。</p>
+      <div class="modal-form">
+        <input id="signup-email" type="email" placeholder="注册邮箱" autocomplete="email">
+        <input id="signup-password" type="password" placeholder="输入密码（至少 6 位）" autocomplete="new-password">
+        <input id="signup-password-confirm" type="password" placeholder="再次输入密码" autocomplete="new-password">
+        <div class="modal-actions">
+          <button id="signup-submit-btn" class="btn-main" type="button">确认注册</button>
+          <button id="signup-cancel-btn" class="btn-plain" type="button">取消</button>
+        </div>
+      </div>
+      <p id="signup-message" class="modal-message">注册成功后会自动尝试登录。</p>
+    </div>
+  </section>
+
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
@@ -447,19 +499,32 @@
     (function () {
       var SUPABASE_URL = "https://czzjoepcuvjkfugxjden.supabase.co";
       var SUPABASE_ANON_KEY = "sb_publishable_NoBiC-LB6xyxnBNAxdku4A_sSP5Om50";
+      var PLACE_CACHE_KEY = "travel_place_cache_v1";
 
       var points = [];
       var currentMode = "all";
       var currentUser = null;
       var isBusy = false;
+      var dbHasPlaceColumn = true;
+      var placeCache = loadPlaceCache();
+      var placeLookupInFlight = {};
+      var pointResolveInFlight = {};
 
       var authEmailInput = document.getElementById("auth-email");
       var authPasswordInput = document.getElementById("auth-password");
-      var signupBtn = document.getElementById("signup-btn");
       var signinBtn = document.getElementById("signin-btn");
+      var openSignupBtn = document.getElementById("open-signup-btn");
       var signoutBtn = document.getElementById("signout-btn");
       var authStatus = document.getElementById("auth-status");
       var authMessage = document.getElementById("auth-message");
+
+      var signupModal = document.getElementById("signup-modal");
+      var signupEmailInput = document.getElementById("signup-email");
+      var signupPasswordInput = document.getElementById("signup-password");
+      var signupPasswordConfirmInput = document.getElementById("signup-password-confirm");
+      var signupSubmitBtn = document.getElementById("signup-submit-btn");
+      var signupCancelBtn = document.getElementById("signup-cancel-btn");
+      var signupMessage = document.getElementById("signup-message");
 
       var startInput = document.getElementById("start-time");
       var endInput = document.getElementById("end-time");
@@ -500,21 +565,36 @@
       bindAuthListener();
       render(false);
       initializeSession();
+      detectAuthSettings();
       window.addEventListener("resize", function () {
         map.invalidateSize();
       });
 
       function bindEvents() {
-        signupBtn.addEventListener("click", function () {
-          signUp();
-        });
-
         signinBtn.addEventListener("click", function () {
           signIn();
         });
 
+        openSignupBtn.addEventListener("click", function () {
+          openSignupModal();
+        });
+
         signoutBtn.addEventListener("click", function () {
           signOut();
+        });
+
+        signupSubmitBtn.addEventListener("click", function () {
+          signUpFromModal();
+        });
+
+        signupCancelBtn.addEventListener("click", function () {
+          closeSignupModal();
+        });
+
+        signupModal.addEventListener("click", function (event) {
+          if (event.target === signupModal) {
+            closeSignupModal();
+          }
         });
 
         applyFilterBtn.addEventListener("click", function () {
@@ -596,53 +676,130 @@
         }
       }
 
-      async function signUp() {
-        var creds = readCredentials();
-        if (!creds) return;
-
-        setBusy(true, "注册中...");
-        setAuthMessage("正在注册，请稍候...", false);
-
+      async function detectAuthSettings() {
         try {
-          var result = await supabaseClient.auth.signUp({
-            email: creds.email,
-            password: creds.password,
-            options: {
-              emailRedirectTo: window.location.origin + window.location.pathname
+          var resp = await fetch(SUPABASE_URL + "/auth/v1/settings", {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: "Bearer " + SUPABASE_ANON_KEY
             }
           });
+          if (!resp.ok) return;
 
-          if (result.error) {
-            throw result.error;
+          var data = await resp.json();
+          if (data && data.mailer_autoconfirm === false) {
+            setAuthMessage("当前项目仍开启邮箱验证。若你要取消验证：Supabase -> Authentication -> Providers -> Email -> 关闭 Confirm email。", true);
+          }
+        } catch (_e) {
+        }
+      }
+
+      function openSignupModal() {
+        signupEmailInput.value = authEmailInput.value.trim();
+        signupPasswordInput.value = "";
+        signupPasswordConfirmInput.value = "";
+        setSignupMessage("注册成功后会自动尝试登录。", false);
+        signupModal.classList.add("open");
+        signupModal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeSignupModal() {
+        signupModal.classList.remove("open");
+        signupModal.setAttribute("aria-hidden", "true");
+      }
+
+      async function signUpFromModal() {
+        if (isBusy) return;
+
+        var email = signupEmailInput.value.trim();
+        var password = signupPasswordInput.value;
+        var confirm = signupPasswordConfirmInput.value;
+
+        if (!email || !password || !confirm) {
+          setSignupMessage("请完整填写邮箱和两次密码", true);
+          return;
+        }
+
+        if (password.length < 6) {
+          setSignupMessage("密码至少 6 位", true);
+          return;
+        }
+
+        if (password !== confirm) {
+          setSignupMessage("两次密码不一致，请重新输入", true);
+          return;
+        }
+
+        setBusy(true, "注册中...");
+        setSignupMessage("正在注册，请稍候...", false);
+
+        try {
+          var signUpResult = await supabaseClient.auth.signUp({
+            email: email,
+            password: password
+          });
+
+          if (signUpResult.error) {
+            throw signUpResult.error;
           }
 
-          if (result.data && result.data.session) {
+          if (signUpResult.data && signUpResult.data.session) {
+            authEmailInput.value = email;
+            authPasswordInput.value = password;
+            closeSignupModal();
             setStatus("注册并登录成功", false);
             setAuthMessage("注册并登录成功", false);
-          } else {
-            setStatus("注册成功，请去邮箱完成验证后再登录", false);
-            setAuthMessage("注册成功，验证邮件已发送到：" + creds.email + "。请验证后再登录。", false);
+            return;
           }
+
+          var loginResult = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
+
+          if (loginResult.error) {
+            setSignupMessage("注册成功，但当前项目仍要求邮箱验证。请在 Supabase 关闭 Confirm email。", true);
+            setStatus("注册成功，但尚未登录", true);
+            return;
+          }
+
+          authEmailInput.value = email;
+          authPasswordInput.value = password;
+          closeSignupModal();
+          setStatus("注册并登录成功", false);
+          setAuthMessage("注册并登录成功", false);
         } catch (error) {
           var msg = toErrorMessage(error);
+          setSignupMessage("注册失败：" + msg, true);
           setStatus("注册失败：" + msg, true);
-          setAuthMessage("注册失败：" + msg, true);
         } finally {
           setBusy(false);
         }
       }
 
       async function signIn() {
-        var creds = readCredentials();
-        if (!creds) return;
+        var email = authEmailInput.value.trim();
+        var password = authPasswordInput.value;
+
+        if (!email || !password) {
+          setStatus("请输入邮箱和密码", true);
+          setAuthMessage("请输入邮箱和密码", true);
+          return;
+        }
+
+        if (password.length < 6) {
+          setStatus("密码至少 6 位", true);
+          setAuthMessage("密码至少 6 位", true);
+          return;
+        }
 
         setBusy(true, "登录中...");
         setAuthMessage("正在登录，请稍候...", false);
 
         try {
           var result = await supabaseClient.auth.signInWithPassword({
-            email: creds.email,
-            password: creds.password
+            email: email,
+            password: password
           });
 
           if (result.error) {
@@ -690,27 +847,52 @@
           return;
         }
 
-        var result = await supabaseClient
-          .from("travel_points")
-          .select("id, lat, lng, visited_at")
-          .eq("user_id", currentUser.id)
-          .order("visited_at", { ascending: true });
+        var rows = [];
 
-        if (result.error) {
-          throw result.error;
+        if (dbHasPlaceColumn) {
+          var withPlace = await supabaseClient
+            .from("travel_points")
+            .select("id, lat, lng, visited_at, place_name")
+            .eq("user_id", currentUser.id)
+            .order("visited_at", { ascending: true });
+
+          if (withPlace.error) {
+            if (isMissingPlaceColumnError(withPlace.error)) {
+              dbHasPlaceColumn = false;
+            } else {
+              throw withPlace.error;
+            }
+          } else {
+            rows = withPlace.data || [];
+          }
         }
 
-        points = (result.data || []).map(function (row) {
+        if (!dbHasPlaceColumn) {
+          var withoutPlace = await supabaseClient
+            .from("travel_points")
+            .select("id, lat, lng, visited_at")
+            .eq("user_id", currentUser.id)
+            .order("visited_at", { ascending: true });
+
+          if (withoutPlace.error) {
+            throw withoutPlace.error;
+          }
+          rows = withoutPlace.data || [];
+        }
+
+        points = rows.map(function (row) {
           return {
             id: row.id,
             lat: Number(row.lat),
             lng: Number(row.lng),
-            timestamp: new Date(row.visited_at).getTime()
+            timestamp: new Date(row.visited_at).getTime(),
+            placeName: row.place_name || ""
           };
         });
 
         render(false);
         updateActionButtons();
+        hydrateMissingPlaceNames(points);
       }
 
       async function addCurrentLocation() {
@@ -732,17 +914,34 @@
               var lat = Number(pos.coords.latitude.toFixed(6));
               var lng = Number(pos.coords.longitude.toFixed(6));
               var visitedAt = new Date().toISOString();
+              var placeName = await resolvePlaceName(lat, lng);
+
+              var payload = {
+                user_id: currentUser.id,
+                lat: lat,
+                lng: lng,
+                visited_at: visitedAt
+              };
+
+              if (dbHasPlaceColumn && placeName) {
+                payload.place_name = placeName;
+              }
 
               var result = await supabaseClient
                 .from("travel_points")
-                .insert({
-                  user_id: currentUser.id,
-                  lat: lat,
-                  lng: lng,
-                  visited_at: visitedAt
-                })
-                .select("id, lat, lng, visited_at")
+                .insert(payload)
+                .select(dbHasPlaceColumn ? "id, lat, lng, visited_at, place_name" : "id, lat, lng, visited_at")
                 .single();
+
+              if (result.error && isMissingPlaceColumnError(result.error)) {
+                dbHasPlaceColumn = false;
+                delete payload.place_name;
+                result = await supabaseClient
+                  .from("travel_points")
+                  .insert(payload)
+                  .select("id, lat, lng, visited_at")
+                  .single();
+              }
 
               if (result.error) {
                 throw result.error;
@@ -752,13 +951,14 @@
                 id: result.data.id,
                 lat: Number(result.data.lat),
                 lng: Number(result.data.lng),
-                timestamp: new Date(result.data.visited_at).getTime()
+                timestamp: new Date(result.data.visited_at).getTime(),
+                placeName: result.data.place_name || placeName || ""
               });
               points.sort(function (a, b) { return a.timestamp - b.timestamp; });
 
               render(true);
               updateActionButtons();
-              setStatus("已记录：" + formatDateTime(Date.now()), false);
+              setStatus("已记录：" + (placeName || "新地点"), false);
             } catch (error) {
               setStatus("保存失败：" + toErrorMessage(error), true);
             } finally {
@@ -812,7 +1012,7 @@
 
           render(false);
           updateActionButtons();
-          setStatus("已撤回最后一条记录：" + formatDateTime(latest.timestamp), false);
+          setStatus("已撤回最后一条记录：" + (latest.placeName || formatDateTime(latest.timestamp)), false);
         } catch (error) {
           setStatus("撤回失败：" + toErrorMessage(error), true);
         } finally {
@@ -820,23 +1020,143 @@
         }
       }
 
-      function readCredentials() {
-        var email = authEmailInput.value.trim();
-        var password = authPasswordInput.value;
+      function hydrateMissingPlaceNames(items) {
+        items.forEach(function (point) {
+          if (point.placeName || pointResolveInFlight[point.id]) return;
 
-        if (!email || !password) {
-          setStatus("请输入邮箱和密码", true);
-          setAuthMessage("请输入邮箱和密码", true);
-          return null;
+          pointResolveInFlight[point.id] = true;
+          resolvePlaceName(point.lat, point.lng)
+            .then(function (name) {
+              if (!name) return;
+              point.placeName = name;
+              render(false);
+              if (dbHasPlaceColumn && currentUser) {
+                persistPointPlaceName(point);
+              }
+            })
+            .catch(function () {
+            })
+            .finally(function () {
+              delete pointResolveInFlight[point.id];
+            });
+        });
+      }
+
+      async function persistPointPlaceName(point) {
+        var result = await supabaseClient
+          .from("travel_points")
+          .update({ place_name: point.placeName })
+          .eq("id", point.id)
+          .eq("user_id", currentUser.id);
+
+        if (result.error && isMissingPlaceColumnError(result.error)) {
+          dbHasPlaceColumn = false;
+        }
+      }
+
+      async function resolvePlaceName(lat, lng) {
+        var key = lat.toFixed(5) + "," + lng.toFixed(5);
+        if (placeCache[key]) {
+          return placeCache[key];
         }
 
-        if (password.length < 6) {
-          setStatus("密码至少 6 位", true);
-          setAuthMessage("密码至少 6 位", true);
-          return null;
+        if (placeLookupInFlight[key]) {
+          return placeLookupInFlight[key];
         }
 
-        return { email: email, password: password };
+        placeLookupInFlight[key] = fetch(
+          "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" +
+          encodeURIComponent(lat) +
+          "&lon=" +
+          encodeURIComponent(lng) +
+          "&zoom=18&addressdetails=1",
+          {
+            headers: {
+              "Accept-Language": "zh-CN,en;q=0.8"
+            }
+          }
+        )
+          .then(function (resp) {
+            if (!resp.ok) return null;
+            return resp.json();
+          })
+          .then(function (data) {
+            var name = extractPlaceName(data);
+            if (name) {
+              placeCache[key] = name;
+              savePlaceCache(placeCache);
+            }
+            return name || "";
+          })
+          .catch(function () {
+            return "";
+          })
+          .finally(function () {
+            delete placeLookupInFlight[key];
+          });
+
+        return placeLookupInFlight[key];
+      }
+
+      function extractPlaceName(data) {
+        if (!data) return "";
+        if (typeof data.name === "string" && data.name.trim()) {
+          return data.name.trim();
+        }
+
+        var address = data.address || {};
+        var keys = [
+          "attraction",
+          "building",
+          "amenity",
+          "shop",
+          "office",
+          "tourism",
+          "leisure",
+          "road",
+          "neighbourhood",
+          "suburb",
+          "city",
+          "town",
+          "state"
+        ];
+
+        for (var i = 0; i < keys.length; i += 1) {
+          var v = address[keys[i]];
+          if (typeof v === "string" && v.trim()) {
+            return v.trim();
+          }
+        }
+
+        if (typeof data.display_name === "string" && data.display_name.trim()) {
+          return data.display_name.split(",")[0].trim();
+        }
+
+        return "";
+      }
+
+      function loadPlaceCache() {
+        try {
+          var raw = localStorage.getItem(PLACE_CACHE_KEY);
+          if (!raw) return {};
+          var parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== "object") return {};
+          return parsed;
+        } catch (_e) {
+          return {};
+        }
+      }
+
+      function savePlaceCache(cache) {
+        try {
+          localStorage.setItem(PLACE_CACHE_KEY, JSON.stringify(cache));
+        } catch (_e) {
+        }
+      }
+
+      function isMissingPlaceColumnError(error) {
+        var msg = toErrorMessage(error).toLowerCase();
+        return msg.indexOf("place_name") !== -1 && msg.indexOf("does not exist") !== -1;
       }
 
       function getFilteredPoints() {
@@ -864,7 +1184,18 @@
               fillOpacity: 0.88,
               weight: 2
             })
-              .bindPopup("第 " + (idx + 1) + " 个点<br>" + formatDateTime(p.timestamp) + "<br>" + p.lat + ", " + p.lng)
+              .bindPopup(
+                "第 " +
+                (idx + 1) +
+                " 个点<br>" +
+                (p.placeName || "地点解析中...") +
+                "<br>" +
+                formatDateTime(p.timestamp) +
+                "<br>" +
+                p.lat +
+                ", " +
+                p.lng
+              )
               .addTo(markerLayer);
           });
         } else {
@@ -889,7 +1220,18 @@
               fillOpacity: 0.95,
               weight: 2
             })
-              .bindPopup("轨迹点 " + (idx + 1) + "<br>" + formatDateTime(p.timestamp) + "<br>" + p.lat + ", " + p.lng)
+              .bindPopup(
+                "轨迹点 " +
+                (idx + 1) +
+                "<br>" +
+                (p.placeName || "地点解析中...") +
+                "<br>" +
+                formatDateTime(p.timestamp) +
+                "<br>" +
+                p.lat +
+                ", " +
+                p.lng
+              )
               .addTo(trackLayer);
           });
         }
@@ -920,11 +1262,17 @@
           var t = document.createElement("time");
           t.textContent = formatDateTime(p.timestamp);
 
-          var c = document.createElement("p");
-          c.textContent = "#" + (filtered.length - index) + "  纬度: " + p.lat + "，经度: " + p.lng;
+          var place = document.createElement("p");
+          place.className = "place";
+          place.textContent = "#" + (filtered.length - index) + "  " + (p.placeName || "地点解析中...");
+
+          var coord = document.createElement("p");
+          coord.className = "coord";
+          coord.textContent = "纬度: " + p.lat + "，经度: " + p.lng;
 
           li.appendChild(t);
-          li.appendChild(c);
+          li.appendChild(place);
+          li.appendChild(coord);
           historyList.appendChild(li);
         });
       }
@@ -963,6 +1311,11 @@
         authMessage.classList.toggle("warn", Boolean(isWarn));
       }
 
+      function setSignupMessage(text, isWarn) {
+        signupMessage.textContent = text;
+        signupMessage.classList.toggle("warn", Boolean(isWarn));
+      }
+
       function setStatus(text, isWarn) {
         statusText.textContent = text;
         statusText.classList.toggle("warn", Boolean(isWarn));
@@ -978,9 +1331,11 @@
 
       function updateActionButtons() {
         var isLoggedIn = Boolean(currentUser);
-        signupBtn.disabled = isBusy || isLoggedIn;
         signinBtn.disabled = isBusy || isLoggedIn;
+        openSignupBtn.disabled = isBusy || isLoggedIn;
         signoutBtn.disabled = isBusy || !isLoggedIn;
+        signupSubmitBtn.disabled = isBusy;
+        signupCancelBtn.disabled = isBusy;
         recordBtn.disabled = isBusy || !isLoggedIn;
         undoBtn.disabled = isBusy || !isLoggedIn || points.length === 0;
       }

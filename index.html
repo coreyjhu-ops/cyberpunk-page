@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cyberpunk Landing</title>
+  <title>Corey's Toolbox</title>
   <style>
     :root {
       --bg-1: #070b1b;
@@ -54,14 +54,13 @@
       z-index: 1;
       min-height: 100svh;
       display: grid;
-      gap: clamp(16px, 2vw, 24px);
-      align-content: center;
+      place-items: center;
       padding: clamp(20px, 4vw, 48px);
     }
 
     .hero {
       width: min(960px, 100%);
-      min-height: min(62svh, 620px);
+      min-height: min(80svh, 760px);
       display: grid;
       grid-template-columns: 1.2fr 0.8fr;
       gap: clamp(18px, 2.5vw, 36px);
@@ -113,6 +112,82 @@
       color: rgba(217, 238, 255, 0.86);
     }
 
+    .rate-badge {
+      position: fixed;
+      top: clamp(12px, 3vw, 24px);
+      left: clamp(12px, 3vw, 24px);
+      z-index: 3;
+      border: 1px solid rgba(31, 245, 255, 0.65);
+      background: rgba(6, 10, 25, 0.78);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: clamp(0.78rem, 1.5vw, 0.95rem);
+      letter-spacing: 0.06em;
+      backdrop-filter: blur(6px);
+      box-shadow:
+        0 0 0 1px rgba(255, 59, 245, 0.2) inset,
+        0 0 16px rgba(31, 245, 255, 0.2);
+    }
+
+    .converter {
+      margin-top: clamp(12px, 2vw, 18px);
+      border: 1px solid rgba(255, 224, 102, 0.55);
+      border-radius: 12px;
+      padding: clamp(14px, 2.5vw, 18px);
+      background: rgba(4, 8, 20, 0.62);
+      display: grid;
+      gap: 12px;
+      max-width: 440px;
+    }
+
+    .converter h2 {
+      font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--neon-gold);
+    }
+
+    .converter-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .converter label {
+      font-size: 0.85rem;
+      color: rgba(217, 238, 255, 0.88);
+      letter-spacing: 0.05em;
+    }
+
+    .converter select,
+    .converter input {
+      width: 100%;
+      border: 1px solid rgba(31, 245, 255, 0.48);
+      border-radius: 10px;
+      background: rgba(3, 8, 22, 0.85);
+      color: #e9f7ff;
+      padding: 10px 12px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .converter select:focus,
+    .converter input:focus {
+      border-color: rgba(255, 59, 245, 0.8);
+      box-shadow: 0 0 0 3px rgba(255, 59, 245, 0.15);
+    }
+
+    .result {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: rgba(217, 238, 255, 0.95);
+      min-height: 1.6em;
+    }
+
+    .result strong {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px rgba(31, 245, 255, 0.55);
+    }
+
     .right {
       display: grid;
       place-items: center;
@@ -161,124 +236,6 @@
       }
     }
 
-    .gallery {
-      width: min(960px, 100%);
-      display: grid;
-      gap: 14px;
-      padding-top: clamp(16px, 2vw, 24px);
-    }
-
-    .gallery-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .gallery-title {
-      font-size: clamp(1rem, 2.2vw, 1.35rem);
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--neon-cyan);
-      text-shadow: 0 0 10px rgba(31, 245, 255, 0.52);
-    }
-
-    .gallery-status {
-      font-size: 0.92rem;
-      color: rgba(217, 238, 255, 0.85);
-      letter-spacing: 0.08em;
-      white-space: nowrap;
-    }
-
-    .carousel {
-      position: relative;
-      border: 1px solid rgba(31, 245, 255, 0.45);
-      border-radius: 14px;
-      overflow: hidden;
-      touch-action: pan-y;
-      background: rgba(5, 8, 20, 0.85);
-    }
-
-    .track {
-      display: flex;
-      transition: transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1);
-      will-change: transform;
-    }
-
-    .slide {
-      min-width: 100%;
-      aspect-ratio: 16 / 10;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      filter: saturate(1.08) contrast(1.05);
-      transform: scale(1.01);
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-
-    .nav-btn {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: clamp(34px, 5vw, 44px);
-      height: clamp(34px, 5vw, 44px);
-      border-radius: 999px;
-      border: 1px solid rgba(255, 59, 245, 0.7);
-      background: rgba(7, 11, 27, 0.7);
-      color: #f7fbff;
-      font-size: 1.2rem;
-      cursor: pointer;
-      box-shadow: 0 0 14px rgba(255, 59, 245, 0.35);
-      transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
-      z-index: 2;
-    }
-
-    .nav-btn:hover {
-      background: rgba(255, 59, 245, 0.2);
-      box-shadow: 0 0 18px rgba(31, 245, 255, 0.45);
-    }
-
-    .nav-btn:active {
-      transform: translateY(-50%) scale(0.95);
-    }
-
-    .nav-btn.prev {
-      left: 10px;
-    }
-
-    .nav-btn.next {
-      right: 10px;
-    }
-
-    .dots {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: 0;
-      background: rgba(217, 238, 255, 0.35);
-      cursor: pointer;
-    }
-
-    .dot.active {
-      background: var(--neon-cyan);
-      box-shadow: 0 0 10px rgba(31, 245, 255, 0.75);
-    }
-
     @media (max-width: 900px) {
       .hero {
         grid-template-columns: 1fr;
@@ -292,158 +249,112 @@
       .core {
         width: min(70vw, 290px);
       }
-
-      .gallery-head {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .slide {
-        aspect-ratio: 4 / 3;
-      }
     }
   </style>
 </head>
 <body>
   <div class="grid-overlay" aria-hidden="true"></div>
+  <div class="rate-badge" id="rate-badge">Loading rate...</div>
 
   <main class="page">
     <section class="hero">
       <article class="panel left">
-        <p class="tag">Neon District 09</p>
-        <h1>Cyberpunk<br>Interface</h1>
+        <p class="tag">Corey's Toolbox</p>
+        <h1>Corey's<br>Toolbox</h1>
         <p class="subtitle">
-          赛博朋克风占位页。当前只保留核心视觉和响应式布局，后续可继续扩展内容模块。
+          实时汇率与美元/人民币快速换算。保持赛博朋克视觉主题，并优先保证移动端和桌面端的显示比例。
         </p>
+        <section class="converter" aria-label="汇率换算">
+          <h2>USD / CNY Converter</h2>
+          <div class="converter-row">
+            <label for="currency-select">输入币种</label>
+            <select id="currency-select">
+              <option value="USD">美元 (USD)</option>
+              <option value="CNY">人民币 (CNY)</option>
+            </select>
+          </div>
+          <div class="converter-row">
+            <label for="amount-input">输入金额</label>
+            <input id="amount-input" type="number" inputmode="decimal" min="0" step="0.01" placeholder="例如 100">
+          </div>
+          <p class="result" id="result-text">请输入金额开始计算</p>
+        </section>
       </article>
 
       <aside class="panel right">
         <div class="core" aria-hidden="true"></div>
       </aside>
     </section>
-
-    <section class="panel gallery" aria-label="赛博朋克图片集">
-      <div class="gallery-head">
-        <h2 class="gallery-title">Neon Gallery</h2>
-        <p class="gallery-status" id="gallery-status">01 / 10</p>
-      </div>
-
-      <div class="carousel" id="carousel">
-        <button class="nav-btn prev" id="prev-btn" aria-label="上一张">&#10094;</button>
-        <div class="track" id="track">
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,city?lock=1" alt="赛博朋克城市夜景 1" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,neon?lock=2" alt="赛博朋克城市夜景 2" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,street?lock=3" alt="赛博朋克城市夜景 3" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,night?lock=4" alt="赛博朋克城市夜景 4" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,lights?lock=5" alt="赛博朋克城市夜景 5" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,city?lock=6" alt="赛博朋克城市夜景 6" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,neon?lock=7" alt="赛博朋克城市夜景 7" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,street?lock=8" alt="赛博朋克城市夜景 8" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,night?lock=9" alt="赛博朋克城市夜景 9" loading="lazy" draggable="false"></figure>
-          <figure class="slide"><img src="https://loremflickr.com/1600/1000/cyberpunk,lights?lock=10" alt="赛博朋克城市夜景 10" loading="lazy" draggable="false"></figure>
-        </div>
-        <button class="nav-btn next" id="next-btn" aria-label="下一张">&#10095;</button>
-      </div>
-      <div class="dots" id="dots" aria-label="图片导航"></div>
-    </section>
   </main>
 
   <script>
     (function () {
-      var track = document.getElementById("track");
-      var status = document.getElementById("gallery-status");
-      var dotsWrap = document.getElementById("dots");
-      var prevBtn = document.getElementById("prev-btn");
-      var nextBtn = document.getElementById("next-btn");
-      var slides = Array.from(track.children);
-      var carousel = document.getElementById("carousel");
-      var total = slides.length;
-      var index = 0;
-      var startX = 0;
-      var deltaX = 0;
-      var dragging = false;
+      var rateBadge = document.getElementById("rate-badge");
+      var currencySelect = document.getElementById("currency-select");
+      var amountInput = document.getElementById("amount-input");
+      var resultText = document.getElementById("result-text");
+      var usdToCny = null;
 
-      function pad(num) {
-        return String(num).padStart(2, "0");
-      }
-
-      function setActiveDot() {
-        Array.from(dotsWrap.children).forEach(function (dot, i) {
-          dot.classList.toggle("active", i === index);
+      function format(num) {
+        return Number(num).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
         });
       }
 
-      function update() {
-        track.style.transform = "translateX(" + (-index * 100) + "%)";
-        status.textContent = pad(index + 1) + " / " + pad(total);
-        setActiveDot();
-      }
-
-      function go(nextIndex) {
-        index = (nextIndex + total) % total;
-        update();
-      }
-
-      function onPointerDown(event) {
-        dragging = true;
-        startX = event.clientX;
-        deltaX = 0;
-        track.style.transition = "none";
-      }
-
-      function onPointerMove(event) {
-        if (!dragging) {
+      function updateResult() {
+        var raw = Number(amountInput.value);
+        if (!usdToCny) {
+          resultText.textContent = "汇率加载中，请稍后...";
           return;
         }
-        deltaX = event.clientX - startX;
-        var dragPercent = (deltaX / carousel.clientWidth) * 100;
-        track.style.transform = "translateX(" + ((-index * 100) + dragPercent) + "%)";
-      }
-
-      function onPointerUp() {
-        if (!dragging) {
+        if (!amountInput.value) {
+          resultText.textContent = "请输入金额开始计算";
           return;
         }
-        dragging = false;
-        track.style.transition = "transform 380ms cubic-bezier(0.2, 0.7, 0.2, 1)";
-        if (Math.abs(deltaX) > 50) {
-          if (deltaX < 0) {
-            go(index + 1);
-          } else {
-            go(index - 1);
-          }
+        if (Number.isNaN(raw) || raw < 0) {
+          resultText.textContent = "请输入有效的非负数字";
+          return;
+        }
+
+        if (currencySelect.value === "USD") {
+          var cnyValue = raw * usdToCny;
+          resultText.innerHTML = "<strong>" + format(raw) + " USD</strong> = <strong>" + format(cnyValue) + " CNY</strong>";
         } else {
-          update();
+          var usdValue = raw / usdToCny;
+          resultText.innerHTML = "<strong>" + format(raw) + " CNY</strong> = <strong>" + format(usdValue) + " USD</strong>";
         }
       }
 
-      slides.forEach(function (_, i) {
-        var dot = document.createElement("button");
-        dot.className = "dot";
-        dot.type = "button";
-        dot.setAttribute("aria-label", "切换到第 " + (i + 1) + " 张");
-        dot.addEventListener("click", function () { go(i); });
-        dotsWrap.appendChild(dot);
-      });
-
-      prevBtn.addEventListener("click", function () { go(index - 1); });
-      nextBtn.addEventListener("click", function () { go(index + 1); });
-
-      track.addEventListener("pointerdown", onPointerDown);
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
-      window.addEventListener("pointercancel", onPointerUp);
-
-      window.addEventListener("keydown", function (event) {
-        if (event.key === "ArrowLeft") {
-          go(index - 1);
+      function updateBadge() {
+        if (!usdToCny) {
+          rateBadge.textContent = "1 USD = -- CNY";
+          return;
         }
-        if (event.key === "ArrowRight") {
-          go(index + 1);
-        }
-      });
+        rateBadge.textContent = "1 USD = " + usdToCny.toFixed(4) + " CNY";
+      }
 
-      update();
+      function fetchRate() {
+        fetch("https://api.frankfurter.app/latest?from=USD&to=CNY")
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            if (!data || !data.rates || !data.rates.CNY) {
+              throw new Error("Invalid rate payload");
+            }
+            usdToCny = Number(data.rates.CNY);
+            updateBadge();
+            updateResult();
+          })
+          .catch(function () {
+            rateBadge.textContent = "1 USD = N/A (fetch failed)";
+            resultText.textContent = "无法获取实时汇率，请稍后刷新重试";
+          });
+      }
+
+      currencySelect.addEventListener("change", updateResult);
+      amountInput.addEventListener("input", updateResult);
+
+      fetchRate();
     })();
   </script>
 </body>

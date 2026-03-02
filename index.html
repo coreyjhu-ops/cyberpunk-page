@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>我的旅行足迹</title>
+  <title>人生足迹</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+SC:wght@500;700&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
       --accent: #2c7a5d;
       --accent-soft: #cfe7dc;
       --warn: #b15f33;
-      --card: rgba(255, 255, 255, 0.9);
+      --card: rgba(255, 255, 255, 0.92);
       --stroke: rgba(31, 45, 34, 0.16);
       --shadow: 0 16px 38px rgba(31, 45, 34, 0.12);
     }
@@ -49,19 +49,26 @@
     }
 
     .shell {
-      max-width: 1280px;
+      max-width: 1320px;
       margin: 0 auto;
       display: grid;
       gap: 12px;
     }
 
     .headline,
-    .auth-card {
-      padding: 12px 16px;
+    .auth-card,
+    .filters-card,
+    .map-card,
+    .history-card {
       border: 1px solid var(--stroke);
       border-radius: 14px;
       background: var(--card);
       box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .headline {
+      padding: 12px 16px;
       backdrop-filter: blur(4px);
     }
 
@@ -77,17 +84,32 @@
       font-size: 0.92rem;
     }
 
-    .auth-title {
-      font-size: 0.96rem;
+    .workspace {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 320px;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .left-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .auth-card,
+    .filters-card {
+      padding: 12px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
       font-family: "Manrope", sans-serif;
       margin-bottom: 8px;
     }
 
     .auth-form {
       display: grid;
-      grid-template-columns: 1fr 1fr auto auto auto;
       gap: 8px;
-      align-items: center;
     }
 
     .auth-form input {
@@ -101,9 +123,17 @@
       min-width: 0;
     }
 
-    .auth-status {
+    .auth-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .auth-status,
+    .auth-message {
       margin-top: 8px;
       font-size: 0.82rem;
+      line-height: 1.45;
       color: rgba(31, 45, 34, 0.8);
       word-break: break-word;
     }
@@ -112,79 +142,17 @@
       color: #174232;
     }
 
-    .auth-help {
-      margin-top: 8px;
-      font-size: 0.78rem;
-      color: rgba(31, 45, 34, 0.7);
+    .auth-message.warn {
+      color: var(--warn);
     }
 
-    .auth-help summary {
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .auth-help pre {
-      margin-top: 8px;
-      border: 1px solid var(--stroke);
-      border-radius: 8px;
-      padding: 8px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      background: rgba(255, 255, 255, 0.86);
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 320px;
-      gap: 12px;
-      align-items: stretch;
-    }
-
-    .map-card,
-    .history-card {
-      border: 1px solid var(--stroke);
-      border-radius: 14px;
-      background: var(--card);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .map-wrap {
-      position: relative;
-      height: min(73vh, 740px);
-      min-height: 420px;
-    }
-
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-
-    .toolbar {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      z-index: 500;
+    .filters-form {
       display: grid;
       gap: 8px;
-      padding: 10px;
-      border: 1px solid var(--stroke);
-      border-radius: 12px;
-      background: rgba(250, 252, 247, 0.94);
-      backdrop-filter: blur(6px);
     }
 
-    .filter-row,
-    .mode-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .toolbar label {
-      font-size: 0.78rem;
+    .filters-form label {
+      font-size: 0.8rem;
       color: rgba(31, 45, 34, 0.75);
     }
 
@@ -193,9 +161,10 @@
       border-radius: 8px;
       background: #fff;
       color: var(--ink);
-      padding: 6px 8px;
-      font-size: 0.82rem;
+      padding: 8px 10px;
+      font-size: 0.83rem;
       font-family: inherit;
+      min-width: 0;
     }
 
     button {
@@ -237,6 +206,13 @@
       color: var(--ink);
     }
 
+    .mode-row,
+    .range-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
     .mode-btn {
       background: var(--accent-soft);
       color: #174232;
@@ -247,8 +223,18 @@
       color: #fff;
     }
 
+    .map-card {
+      min-height: 460px;
+    }
+
+    #map {
+      width: 100%;
+      height: min(76vh, 760px);
+      min-height: 460px;
+    }
+
     .history-head {
-      padding: 12px 12px 8px;
+      padding: 12px;
       border-bottom: 1px solid var(--stroke);
     }
 
@@ -265,7 +251,7 @@
 
     .history-list {
       list-style: none;
-      max-height: min(68vh, 650px);
+      max-height: min(76vh, 760px);
       overflow: auto;
       padding: 10px;
       display: grid;
@@ -309,7 +295,7 @@
       padding: 10px;
       border: 1px solid var(--stroke);
       border-radius: 12px;
-      background: rgba(251, 253, 249, 0.95);
+      background: rgba(251, 253, 249, 0.96);
       box-shadow: var(--shadow);
       display: flex;
       flex-wrap: wrap;
@@ -333,18 +319,30 @@
       color: var(--warn);
     }
 
-    @media (max-width: 1120px) {
-      .auth-form {
-        grid-template-columns: 1fr 1fr 1fr;
+    @media (max-width: 1180px) {
+      .workspace {
+        grid-template-columns: 300px minmax(0, 1fr);
+      }
+
+      .history-card {
+        grid-column: 1 / span 2;
+      }
+
+      .history-list {
+        max-height: 36vh;
       }
     }
 
-    @media (max-width: 980px) {
-      .grid {
+    @media (max-width: 860px) {
+      .workspace {
         grid-template-columns: 1fr;
       }
 
-      .map-wrap {
+      .history-card {
+        grid-column: auto;
+      }
+
+      #map {
         height: 58vh;
         min-height: 360px;
       }
@@ -352,23 +350,15 @@
       .history-list {
         max-height: 34vh;
       }
-
-      .filter-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .filter-row button {
-        grid-column: span 1;
-      }
-
-      input[type="datetime-local"] {
-        min-width: 0;
-      }
     }
 
-    @media (max-width: 680px) {
-      .auth-form {
+    @media (max-width: 640px) {
+      .auth-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-row,
+      .range-actions {
         grid-template-columns: 1fr;
       }
 
@@ -385,68 +375,36 @@
 <body>
   <div class="shell">
     <header class="headline">
-      <h1>我的旅行足迹地图</h1>
-      <p>登录后读取属于你自己的云端记录；支持全部地点、轨迹模式、时间区间筛选和撤回上一次记录。</p>
+      <h1>人生足迹</h1>
+      <p>登录后读取属于你自己的云端记录；左侧筛选不会遮挡地图，支持轨迹显示和撤回上一次记录。</p>
     </header>
 
-    <section class="auth-card" aria-label="登录区">
-      <h2 class="auth-title">账号登录（Supabase Auth）</h2>
-      <div class="auth-form">
-        <input id="auth-email" type="email" placeholder="邮箱" autocomplete="email">
-        <input id="auth-password" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password">
-        <button id="signup-btn" class="btn-plain" type="button">注册</button>
-        <button id="signin-btn" class="btn-main" type="button">登录</button>
-        <button id="signout-btn" class="btn-danger" type="button" disabled>退出登录</button>
-      </div>
-      <p id="auth-status" class="auth-status">登录状态：<strong>未登录</strong></p>
-      <details class="auth-help">
-        <summary>展开查看建表 SQL（user_id 绑定登录用户）</summary>
-        <pre>create extension if not exists pgcrypto;
+    <main class="workspace">
+      <aside class="left-panel" aria-label="左侧控制区">
+        <section class="auth-card" aria-label="登录区">
+          <h2 class="card-title">账号登录（Supabase Auth）</h2>
+          <div class="auth-form">
+            <input id="auth-email" type="email" placeholder="邮箱" autocomplete="email">
+            <input id="auth-password" type="password" placeholder="密码（至少 6 位）" autocomplete="current-password">
+            <div class="auth-actions">
+              <button id="signup-btn" class="btn-plain" type="button">注册</button>
+              <button id="signin-btn" class="btn-main" type="button">登录</button>
+              <button id="signout-btn" class="btn-danger" type="button" disabled>退出</button>
+            </div>
+          </div>
+          <p id="auth-status" class="auth-status">登录状态：<strong>未登录</strong></p>
+          <p id="auth-message" class="auth-message">提示：注册后请检查邮箱验证邮件（如果你开启了邮箱验证）。</p>
+        </section>
 
-create table if not exists public.travel_points (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  lat double precision not null,
-  lng double precision not null,
-  visited_at timestamptz not null default now(),
-  created_at timestamptz not null default now()
-);
-
-create index if not exists idx_travel_points_user_time
-on public.travel_points (user_id, visited_at desc);
-
-alter table public.travel_points enable row level security;
-
-create policy "Users can read own points"
-on public.travel_points
-for select
-to authenticated
-using ((select auth.uid()) = user_id);
-
-create policy "Users can insert own points"
-on public.travel_points
-for insert
-to authenticated
-with check ((select auth.uid()) = user_id);
-
-create policy "Users can delete own points"
-on public.travel_points
-for delete
-to authenticated
-using ((select auth.uid()) = user_id);</pre>
-      </details>
-    </section>
-
-    <main class="grid">
-      <section class="map-card" aria-label="地图区域">
-        <div class="map-wrap">
-          <div class="toolbar" aria-label="时间与显示筛选">
-            <div class="filter-row">
-              <label for="start-time">起始时间</label>
-              <input id="start-time" type="datetime-local">
-              <label for="end-time">结束时间</label>
-              <input id="end-time" type="datetime-local">
-              <button id="apply-filter" class="btn-plain" type="button">应用时间区间</button>
+        <section class="filters-card" aria-label="筛选区">
+          <h2 class="card-title">时间筛选与显示模式</h2>
+          <div class="filters-form">
+            <label for="start-time">起始时间</label>
+            <input id="start-time" type="datetime-local">
+            <label for="end-time">结束时间</label>
+            <input id="end-time" type="datetime-local">
+            <div class="range-actions">
+              <button id="apply-filter" class="btn-plain" type="button">应用区间</button>
               <button id="clear-filter" class="btn-plain" type="button">清空区间</button>
             </div>
             <div class="mode-row">
@@ -454,8 +412,11 @@ using ((select auth.uid()) = user_id);</pre>
               <button id="mode-track" class="mode-btn" type="button">显示行迹轨迹</button>
             </div>
           </div>
-          <div id="map"></div>
-        </div>
+        </section>
+      </aside>
+
+      <section class="map-card" aria-label="地图区域">
+        <div id="map"></div>
       </section>
 
       <aside class="history-card" aria-label="历史记录">
@@ -498,6 +459,7 @@ using ((select auth.uid()) = user_id);</pre>
       var signinBtn = document.getElementById("signin-btn");
       var signoutBtn = document.getElementById("signout-btn");
       var authStatus = document.getElementById("auth-status");
+      var authMessage = document.getElementById("auth-message");
 
       var startInput = document.getElementById("start-time");
       var endInput = document.getElementById("end-time");
@@ -522,6 +484,7 @@ using ((select auth.uid()) = user_id);</pre>
 
       if (!window.supabase || typeof window.supabase.createClient !== "function") {
         setStatus("Supabase SDK 加载失败，请刷新页面重试", true);
+        setAuthMessage("Supabase SDK 加载失败，请检查网络或稍后重试", true);
         return;
       }
 
@@ -537,6 +500,9 @@ using ((select auth.uid()) = user_id);</pre>
       bindAuthListener();
       render(false);
       initializeSession();
+      window.addEventListener("resize", function () {
+        map.invalidateSize();
+      });
 
       function bindEvents() {
         signupBtn.addEventListener("click", function () {
@@ -624,6 +590,7 @@ using ((select auth.uid()) = user_id);</pre>
           }
         } catch (error) {
           setStatus("会话初始化失败：" + toErrorMessage(error), true);
+          setAuthMessage("会话初始化失败：" + toErrorMessage(error), true);
         } finally {
           setBusy(false);
         }
@@ -634,10 +601,15 @@ using ((select auth.uid()) = user_id);</pre>
         if (!creds) return;
 
         setBusy(true, "注册中...");
+        setAuthMessage("正在注册，请稍候...", false);
+
         try {
           var result = await supabaseClient.auth.signUp({
             email: creds.email,
-            password: creds.password
+            password: creds.password,
+            options: {
+              emailRedirectTo: window.location.origin + window.location.pathname
+            }
           });
 
           if (result.error) {
@@ -646,11 +618,15 @@ using ((select auth.uid()) = user_id);</pre>
 
           if (result.data && result.data.session) {
             setStatus("注册并登录成功", false);
+            setAuthMessage("注册并登录成功", false);
           } else {
-            setStatus("注册成功，请前往邮箱完成验证后再登录", false);
+            setStatus("注册成功，请去邮箱完成验证后再登录", false);
+            setAuthMessage("注册成功，验证邮件已发送到：" + creds.email + "。请验证后再登录。", false);
           }
         } catch (error) {
-          setStatus("注册失败：" + toErrorMessage(error), true);
+          var msg = toErrorMessage(error);
+          setStatus("注册失败：" + msg, true);
+          setAuthMessage("注册失败：" + msg, true);
         } finally {
           setBusy(false);
         }
@@ -661,6 +637,8 @@ using ((select auth.uid()) = user_id);</pre>
         if (!creds) return;
 
         setBusy(true, "登录中...");
+        setAuthMessage("正在登录，请稍候...", false);
+
         try {
           var result = await supabaseClient.auth.signInWithPassword({
             email: creds.email,
@@ -672,8 +650,11 @@ using ((select auth.uid()) = user_id);</pre>
           }
 
           setStatus("登录成功", false);
+          setAuthMessage("登录成功", false);
         } catch (error) {
-          setStatus("登录失败：" + toErrorMessage(error), true);
+          var msg = toErrorMessage(error);
+          setStatus("登录失败：" + msg, true);
+          setAuthMessage("登录失败：" + msg, true);
         } finally {
           setBusy(false);
         }
@@ -692,8 +673,11 @@ using ((select auth.uid()) = user_id);</pre>
           render(false);
           setAuthStatus();
           setStatus("已退出登录", false);
+          setAuthMessage("已退出登录", false);
         } catch (error) {
-          setStatus("退出登录失败：" + toErrorMessage(error), true);
+          var msg = toErrorMessage(error);
+          setStatus("退出登录失败：" + msg, true);
+          setAuthMessage("退出登录失败：" + msg, true);
         } finally {
           setBusy(false);
         }
@@ -842,11 +826,13 @@ using ((select auth.uid()) = user_id);</pre>
 
         if (!email || !password) {
           setStatus("请输入邮箱和密码", true);
+          setAuthMessage("请输入邮箱和密码", true);
           return null;
         }
 
         if (password.length < 6) {
           setStatus("密码至少 6 位", true);
+          setAuthMessage("密码至少 6 位", true);
           return null;
         }
 
@@ -961,7 +947,7 @@ using ((select auth.uid()) = user_id);</pre>
         }
 
         var bounds = L.latLngBounds(filtered.map(function (p) { return [p.lat, p.lng]; }));
-        map.fitBounds(bounds, { padding: [42, 42], maxZoom: 14 });
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       }
 
       function setAuthStatus() {
@@ -970,6 +956,11 @@ using ((select auth.uid()) = user_id);</pre>
           return;
         }
         authStatus.innerHTML = "登录状态：<strong>已登录</strong>（" + currentUser.email + "）";
+      }
+
+      function setAuthMessage(text, isWarn) {
+        authMessage.textContent = text;
+        authMessage.classList.toggle("warn", Boolean(isWarn));
       }
 
       function setStatus(text, isWarn) {

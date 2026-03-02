@@ -1546,6 +1546,7 @@
           addBtn.type = "button";
           addBtn.textContent = "添加地点";
           addBtn.addEventListener("click", function () {
+            closeJourneysModal();
             openJourneyEditor("add", journey.id);
           });
 

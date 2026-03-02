@@ -21,7 +21,7 @@
       --accent: #2c7a5d;
       --accent-soft: #cfe7dc;
       --warn: #b15f33;
-      --card: rgba(255, 255, 255, 0.88);
+      --card: rgba(255, 255, 255, 0.9);
       --stroke: rgba(31, 45, 34, 0.16);
       --shadow: 0 16px 38px rgba(31, 45, 34, 0.12);
     }
@@ -45,7 +45,7 @@
         radial-gradient(circle at 8% 10%, #dcefd9 0%, transparent 30%),
         radial-gradient(circle at 90% 92%, #f1ddcb 0%, transparent 28%),
         linear-gradient(140deg, var(--bg-a), var(--bg-b));
-      padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(100px + env(safe-area-inset-bottom, 0px));
+      padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(104px + env(safe-area-inset-bottom, 0px));
     }
 
     .shell {
@@ -55,7 +55,8 @@
       gap: 12px;
     }
 
-    .headline {
+    .headline,
+    .db-card {
       padding: 12px 16px;
       border: 1px solid var(--stroke);
       border-radius: 14px;
@@ -76,6 +77,61 @@
       font-size: 0.92rem;
     }
 
+    .db-title {
+      font-size: 0.96rem;
+      font-family: "Manrope", sans-serif;
+      margin-bottom: 8px;
+    }
+
+    .db-form {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 0.8fr auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .db-form input {
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      min-width: 0;
+    }
+
+    .status-line {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: rgba(31, 45, 34, 0.78);
+    }
+
+    .status-line strong {
+      color: #174232;
+    }
+
+    .db-help {
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: rgba(31, 45, 34, 0.7);
+    }
+
+    .db-help summary {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .db-help pre {
+      margin-top: 8px;
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      padding: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: rgba(255, 255, 255, 0.86);
+    }
+
     .grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 320px;
@@ -94,8 +150,8 @@
 
     .map-wrap {
       position: relative;
-      height: min(75vh, 740px);
-      min-height: 440px;
+      height: min(73vh, 740px);
+      min-height: 420px;
     }
 
     #map {
@@ -114,7 +170,7 @@
       padding: 10px;
       border: 1px solid var(--stroke);
       border-radius: 12px;
-      background: rgba(250, 252, 247, 0.92);
+      background: rgba(250, 252, 247, 0.94);
       backdrop-filter: blur(6px);
     }
 
@@ -156,10 +212,22 @@
       transform: translateY(-1px);
     }
 
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .btn-main {
       background: var(--accent);
       color: #fff;
       box-shadow: 0 8px 18px rgba(44, 122, 93, 0.24);
+    }
+
+    .btn-danger {
+      background: #9d3e26;
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(157, 62, 38, 0.22);
     }
 
     .btn-plain {
@@ -196,7 +264,7 @@
 
     .history-list {
       list-style: none;
-      max-height: min(70vh, 680px);
+      max-height: min(68vh, 650px);
       overflow: auto;
       padding: 10px;
       display: grid;
@@ -240,13 +308,19 @@
       padding: 10px;
       border: 1px solid var(--stroke);
       border-radius: 12px;
-      background: rgba(251, 253, 249, 0.94);
+      background: rgba(251, 253, 249, 0.95);
       box-shadow: var(--shadow);
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
       justify-content: space-between;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .status {
@@ -256,6 +330,12 @@
 
     .status.warn {
       color: var(--warn);
+    }
+
+    @media (max-width: 1120px) {
+      .db-form {
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
     @media (max-width: 980px) {
@@ -285,6 +365,20 @@
         min-width: 0;
       }
     }
+
+    @media (max-width: 680px) {
+      .db-form {
+        grid-template-columns: 1fr;
+      }
+
+      .action-bar {
+        justify-content: flex-start;
+      }
+
+      .status {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -293,6 +387,34 @@
       <h1>我的旅行足迹地图</h1>
       <p>中间地图 + 右侧历史记录；点击底部按钮可记录当前位置，支持“全部地点”和“行迹轨迹”两种显示。</p>
     </header>
+
+    <section class="db-card" aria-label="数据库连接">
+      <h2 class="db-title">云数据库连接（Supabase）</h2>
+      <div class="db-form">
+        <input id="db-url" type="text" placeholder="Supabase URL，例如 https://xxx.supabase.co">
+        <input id="db-key" type="text" placeholder="Supabase anon key（公开 key）">
+        <input id="traveler-id" type="text" placeholder="你的 ID，例如 corey">
+        <button id="connect-db-btn" class="btn-main" type="button">连接数据库</button>
+        <button id="reload-db-btn" class="btn-plain" type="button">刷新云端数据</button>
+      </div>
+      <p id="db-status" class="status-line">数据库状态：<strong>未连接</strong></p>
+      <details class="db-help">
+        <summary>展开查看一次性建表 SQL</summary>
+        <pre>create table if not exists public.travel_points (
+  id uuid primary key default gen_random_uuid(),
+  traveler_id text not null,
+  lat double precision not null,
+  lng double precision not null,
+  visited_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_travel_points_traveler_time
+on public.travel_points (traveler_id, visited_at);
+
+alter table public.travel_points disable row level security;</pre>
+      </details>
+    </section>
 
     <main class="grid">
       <section class="map-card" aria-label="地图区域">
@@ -326,8 +448,11 @@
   </div>
 
   <div class="action-bar">
-    <button id="record-btn" class="btn-main" type="button">记录我当前的位置</button>
-    <p id="status" class="status">准备就绪</p>
+    <div class="action-buttons">
+      <button id="record-btn" class="btn-main" type="button" disabled>记录我当前的位置</button>
+      <button id="undo-btn" class="btn-danger" type="button" disabled>撤回上一次记录</button>
+    </div>
+    <p id="status" class="status">请先连接数据库</p>
   </div>
 
   <script
@@ -335,11 +460,22 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (function () {
-      var STORAGE_KEY = "travel_footprints_v1";
-      var points = loadPoints();
+      var DB_CONFIG_KEY = "travel_supabase_config_v1";
+      var points = [];
       var currentMode = "all";
+      var supabaseClient = null;
+      var dbConnected = false;
+      var isBusy = false;
+
+      var dbUrlInput = document.getElementById("db-url");
+      var dbKeyInput = document.getElementById("db-key");
+      var travelerInput = document.getElementById("traveler-id");
+      var connectDbBtn = document.getElementById("connect-db-btn");
+      var reloadDbBtn = document.getElementById("reload-db-btn");
+      var dbStatus = document.getElementById("db-status");
 
       var startInput = document.getElementById("start-time");
       var endInput = document.getElementById("end-time");
@@ -348,6 +484,7 @@
       var modeAllBtn = document.getElementById("mode-all");
       var modeTrackBtn = document.getElementById("mode-track");
       var recordBtn = document.getElementById("record-btn");
+      var undoBtn = document.getElementById("undo-btn");
       var statusText = document.getElementById("status");
       var historyList = document.getElementById("history-list");
       var historyMeta = document.getElementById("history-meta");
@@ -361,55 +498,220 @@
       var markerLayer = L.layerGroup().addTo(map);
       var trackLayer = L.layerGroup().addTo(map);
 
-      applyFilterBtn.addEventListener("click", function () {
-        setStatus("已应用时间区间筛选", false);
-        render(false);
-      });
+      applySavedDbConfig();
+      bindEvents();
+      render(false);
+      updateActionButtons();
 
-      clearFilterBtn.addEventListener("click", function () {
-        startInput.value = "";
-        endInput.value = "";
-        setStatus("已清空时间区间", false);
-        render(false);
-      });
+      function bindEvents() {
+        connectDbBtn.addEventListener("click", function () {
+          connectDatabase(false);
+        });
 
-      modeAllBtn.addEventListener("click", function () {
-        currentMode = "all";
-        modeAllBtn.classList.add("active");
-        modeTrackBtn.classList.remove("active");
-        render(false);
-      });
+        reloadDbBtn.addEventListener("click", function () {
+          refreshFromDb();
+        });
 
-      modeTrackBtn.addEventListener("click", function () {
-        currentMode = "track";
-        modeTrackBtn.classList.add("active");
-        modeAllBtn.classList.remove("active");
-        render(false);
-      });
+        applyFilterBtn.addEventListener("click", function () {
+          setStatus("已应用时间区间筛选", false);
+          render(false);
+        });
 
-      recordBtn.addEventListener("click", function () {
+        clearFilterBtn.addEventListener("click", function () {
+          startInput.value = "";
+          endInput.value = "";
+          setStatus("已清空时间区间", false);
+          render(false);
+        });
+
+        modeAllBtn.addEventListener("click", function () {
+          currentMode = "all";
+          modeAllBtn.classList.add("active");
+          modeTrackBtn.classList.remove("active");
+          render(false);
+        });
+
+        modeTrackBtn.addEventListener("click", function () {
+          currentMode = "track";
+          modeTrackBtn.classList.add("active");
+          modeAllBtn.classList.remove("active");
+          render(false);
+        });
+
+        recordBtn.addEventListener("click", function () {
+          addCurrentLocation();
+        });
+
+        undoBtn.addEventListener("click", function () {
+          undoLastRecord();
+        });
+      }
+
+      function applySavedDbConfig() {
+        try {
+          var raw = localStorage.getItem(DB_CONFIG_KEY);
+          if (!raw) return;
+          var cfg = JSON.parse(raw);
+          if (cfg && typeof cfg === "object") {
+            dbUrlInput.value = cfg.url || "";
+            dbKeyInput.value = cfg.key || "";
+            travelerInput.value = cfg.travelerId || "";
+            if (cfg.url && cfg.key && cfg.travelerId) {
+              connectDatabase(true);
+            }
+          }
+        } catch (e) {
+          setStatus("本地数据库配置读取失败，请重新输入", true);
+        }
+      }
+
+      function saveDbConfig() {
+        var cfg = {
+          url: dbUrlInput.value.trim(),
+          key: dbKeyInput.value.trim(),
+          travelerId: travelerInput.value.trim()
+        };
+        localStorage.setItem(DB_CONFIG_KEY, JSON.stringify(cfg));
+      }
+
+      async function connectDatabase(silent) {
+        var url = dbUrlInput.value.trim();
+        var key = dbKeyInput.value.trim();
+        var travelerId = travelerInput.value.trim();
+
+        if (!url || !key || !travelerId) {
+          setDbStatus(false, "未连接");
+          setStatus("请填写 Supabase URL、anon key、你的 ID", true);
+          return;
+        }
+
+        setBusy(true, "连接数据库...");
+        saveDbConfig();
+
+        try {
+          supabaseClient = window.supabase.createClient(url, key, {
+            auth: { persistSession: false }
+          });
+
+          var result = await supabaseClient
+            .from("travel_points")
+            .select("id", { count: "exact", head: true })
+            .eq("traveler_id", travelerId)
+            .limit(1);
+
+          if (result.error) {
+            throw result.error;
+          }
+
+          dbConnected = true;
+          setDbStatus(true, "已连接（ID: " + travelerId + "）");
+          await fetchPointsFromDb();
+
+          if (!silent) {
+            setStatus("数据库已连接，已同步云端记录", false);
+          }
+        } catch (error) {
+          dbConnected = false;
+          supabaseClient = null;
+          setDbStatus(false, "连接失败");
+          setStatus("数据库连接失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function refreshFromDb() {
+        if (!dbConnected || !supabaseClient) {
+          setStatus("请先连接数据库", true);
+          return;
+        }
+
+        setBusy(true, "同步云端数据...");
+        try {
+          await fetchPointsFromDb();
+          setStatus("云端数据已刷新", false);
+        } catch (error) {
+          setStatus("刷新失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function fetchPointsFromDb() {
+        var travelerId = travelerInput.value.trim();
+        var result = await supabaseClient
+          .from("travel_points")
+          .select("id, lat, lng, visited_at")
+          .eq("traveler_id", travelerId)
+          .order("visited_at", { ascending: true });
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        points = (result.data || []).map(function (row) {
+          return {
+            id: row.id,
+            lat: Number(row.lat),
+            lng: Number(row.lng),
+            timestamp: new Date(row.visited_at).getTime()
+          };
+        });
+
+        render(false);
+      }
+
+      async function addCurrentLocation() {
+        if (!dbConnected || !supabaseClient) {
+          setStatus("请先连接数据库", true);
+          return;
+        }
+
         if (!navigator.geolocation) {
           setStatus("当前浏览器不支持地理定位", true);
           return;
         }
 
-        recordBtn.disabled = true;
-        recordBtn.textContent = "定位中...";
+        setBusy(true, "定位中...");
 
         navigator.geolocation.getCurrentPosition(
-          function (pos) {
-            var point = {
-              id: String(Date.now()) + "_" + String(Math.random()).slice(2, 7),
-              lat: Number(pos.coords.latitude.toFixed(6)),
-              lng: Number(pos.coords.longitude.toFixed(6)),
-              timestamp: Date.now()
-            };
-            points.push(point);
-            points.sort(function (a, b) { return a.timestamp - b.timestamp; });
-            savePoints(points);
-            setStatus("已记录：" + formatDateTime(point.timestamp), false);
-            render(true);
-            resetRecordButton();
+          async function (pos) {
+            try {
+              var travelerId = travelerInput.value.trim();
+              var lat = Number(pos.coords.latitude.toFixed(6));
+              var lng = Number(pos.coords.longitude.toFixed(6));
+              var visitedAt = new Date().toISOString();
+
+              var result = await supabaseClient
+                .from("travel_points")
+                .insert({
+                  traveler_id: travelerId,
+                  lat: lat,
+                  lng: lng,
+                  visited_at: visitedAt
+                })
+                .select("id, lat, lng, visited_at")
+                .single();
+
+              if (result.error) {
+                throw result.error;
+              }
+
+              points.push({
+                id: result.data.id,
+                lat: Number(result.data.lat),
+                lng: Number(result.data.lng),
+                timestamp: new Date(result.data.visited_at).getTime()
+              });
+              points.sort(function (a, b) { return a.timestamp - b.timestamp; });
+
+              render(true);
+              setStatus("已记录：" + formatDateTime(Date.now()), false);
+            } catch (error) {
+              setStatus("保存失败：" + toErrorMessage(error), true);
+            } finally {
+              setBusy(false);
+            }
           },
           function (error) {
             var message = "定位失败";
@@ -417,7 +719,7 @@
             if (error.code === 2) message = "定位失败：位置信息不可用";
             if (error.code === 3) message = "定位失败：获取定位超时";
             setStatus(message, true);
-            resetRecordButton();
+            setBusy(false);
           },
           {
             enableHighAccuracy: true,
@@ -425,28 +727,45 @@
             maximumAge: 0
           }
         );
-      });
-
-      render(false);
-
-      function loadPoints() {
-        try {
-          var raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return [];
-          var parsed = JSON.parse(raw);
-          if (!Array.isArray(parsed)) return [];
-          return parsed
-            .filter(function (item) {
-              return item && Number.isFinite(item.lat) && Number.isFinite(item.lng) && Number.isFinite(item.timestamp);
-            })
-            .sort(function (a, b) { return a.timestamp - b.timestamp; });
-        } catch (e) {
-          return [];
-        }
       }
 
-      function savePoints(data) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      async function undoLastRecord() {
+        if (!dbConnected || !supabaseClient) {
+          setStatus("请先连接数据库", true);
+          return;
+        }
+
+        if (!points.length) {
+          setStatus("没有可撤回的记录", true);
+          return;
+        }
+
+        var latest = points[points.length - 1];
+        setBusy(true, "撤回中...");
+
+        try {
+          var travelerId = travelerInput.value.trim();
+          var result = await supabaseClient
+            .from("travel_points")
+            .delete()
+            .eq("id", latest.id)
+            .eq("traveler_id", travelerId);
+
+          if (result.error) {
+            throw result.error;
+          }
+
+          points = points.filter(function (p) {
+            return p.id !== latest.id;
+          });
+
+          render(false);
+          setStatus("已撤回最后一条记录：" + formatDateTime(latest.timestamp), false);
+        } catch (error) {
+          setStatus("撤回失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
       }
 
       function getFilteredPoints() {
@@ -515,7 +834,7 @@
         if (!filtered.length) {
           var empty = document.createElement("li");
           empty.className = "empty";
-          empty.textContent = "当前没有符合条件的记录。点击底部按钮开始记录你的第一个位置。";
+          empty.textContent = "当前没有符合条件的记录。连接数据库后点击底部按钮开始记录。";
           historyList.appendChild(empty);
           return;
         }
@@ -563,9 +882,32 @@
         statusText.classList.toggle("warn", Boolean(isWarn));
       }
 
-      function resetRecordButton() {
-        recordBtn.disabled = false;
-        recordBtn.textContent = "记录我当前的位置";
+      function setDbStatus(isConnected, label) {
+        dbStatus.innerHTML = "数据库状态：<strong>" + label + "</strong>";
+        dbStatus.style.color = isConnected ? "#174232" : "rgba(31, 45, 34, 0.78)";
+      }
+
+      function setBusy(busy, text) {
+        isBusy = busy;
+        if (busy && text) {
+          setStatus(text, false);
+        }
+        updateActionButtons();
+      }
+
+      function updateActionButtons() {
+        var canOperate = dbConnected && !isBusy;
+        connectDbBtn.disabled = isBusy;
+        reloadDbBtn.disabled = !dbConnected || isBusy;
+        recordBtn.disabled = !canOperate;
+        undoBtn.disabled = !canOperate || points.length === 0;
+      }
+
+      function toErrorMessage(error) {
+        if (!error) return "未知错误";
+        if (typeof error === "string") return error;
+        if (error.message) return error.message;
+        return "请求失败";
       }
 
       function formatDateTime(ts) {

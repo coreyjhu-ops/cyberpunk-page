@@ -1690,6 +1690,7 @@
 
         renderJourneyBanner();
         render(false);
+        updateActionButtons();
         setStatus("已切换到旅程：" + target.name, false);
       }
 
@@ -1697,6 +1698,7 @@
         activeJourneyView = null;
         renderJourneyBanner();
         render(false);
+        updateActionButtons();
         setStatus("已退出旅程视图", false);
       }
 
@@ -1861,6 +1863,53 @@
           setStatus("已撤回最后一条记录：" + (latest.placeName || formatDateTime(latest.timestamp)), false);
         } catch (error) {
           setStatus("撤回失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      async function deletePointFromUser(pointId, labelText) {
+        if (!currentUser) {
+          setStatus("请先登录", true);
+          return;
+        }
+
+        if (!pointId) {
+          setStatus("无效地点记录", true);
+          return;
+        }
+
+        var targetLabel = labelText || "该地点";
+        if (!window.confirm("确认删除「" + targetLabel + "」这条历史记录？此操作不可撤销。")) {
+          return;
+        }
+
+        setBusy(true, "删除记录中...");
+
+        try {
+          var result = await supabaseClient
+            .from("travel_points")
+            .delete()
+            .eq("id", pointId)
+            .eq("user_id", currentUser.id);
+
+          if (result.error) {
+            throw result.error;
+          }
+
+          points = points.filter(function (p) {
+            return p.id !== pointId;
+          });
+
+          await fetchJourneysFromDb();
+          ensureActiveJourneyValid();
+          renderJourneySummary();
+          renderJourneyBanner();
+          renderJourneysModalList();
+          render(false);
+          setStatus("已删除 1 条地点记录", false);
+        } catch (error) {
+          setStatus("删除失败：" + toErrorMessage(error), true);
         } finally {
           setBusy(false);
         }
@@ -2275,6 +2324,15 @@
           });
           actions.appendChild(renameBtn);
 
+          var deleteBtn = document.createElement("button");
+          deleteBtn.className = "btn-danger btn-mini";
+          deleteBtn.type = "button";
+          deleteBtn.textContent = "删除该记录";
+          deleteBtn.addEventListener("click", function () {
+            deletePointFromUser(p.id, p.placeName || formatDateTime(p.timestamp));
+          });
+          actions.appendChild(deleteBtn);
+
           if (activeJourneyView) {
             var removeJourneyBtn = document.createElement("button");
             removeJourneyBtn.className = "btn-plain btn-mini";
@@ -2352,10 +2410,12 @@
       function renderJourneyBanner() {
         if (!activeJourneyView) {
           journeyViewBanner.hidden = true;
+          exitJourneyViewBtn.disabled = true;
           return;
         }
         journeyViewText.textContent = "当前旅程：" + (activeJourneyView.journeyName || "未命名旅程");
         journeyViewBanner.hidden = false;
+        exitJourneyViewBtn.disabled = Boolean(isBusy);
       }
 
       function setAuthStatus() {

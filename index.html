@@ -282,6 +282,18 @@
       color: rgba(31, 45, 34, 0.78);
     }
 
+    .history-actions {
+      margin-top: 6px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-mini {
+      padding: 5px 8px;
+      font-size: 0.75rem;
+      border-radius: 8px;
+    }
+
     .empty {
       padding: 14px;
       border: 1px dashed var(--stroke);
@@ -355,6 +367,18 @@
       color: rgba(31, 45, 34, 0.78);
       margin-bottom: 10px;
       line-height: 1.45;
+    }
+
+    .track-arrow-icon {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      color: #8f4b29;
+      font-weight: 700;
+      font-size: 14px;
+      transform-origin: center;
+      text-shadow: 0 0 3px rgba(255, 255, 255, 0.85);
     }
 
     @media (max-width: 1180px) {
@@ -506,6 +530,8 @@
       var currentUser = null;
       var isBusy = false;
       var dbHasPlaceColumn = true;
+      var placeColumnWarned = false;
+      var updatePolicyWarned = false;
       var placeCache = loadPlaceCache();
       var placeLookupInFlight = {};
       var pointResolveInFlight = {};
@@ -565,7 +591,6 @@
       bindAuthListener();
       render(false);
       initializeSession();
-      detectAuthSettings();
       window.addEventListener("resize", function () {
         map.invalidateSize();
       });
@@ -676,24 +701,6 @@
         }
       }
 
-      async function detectAuthSettings() {
-        try {
-          var resp = await fetch(SUPABASE_URL + "/auth/v1/settings", {
-            headers: {
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: "Bearer " + SUPABASE_ANON_KEY
-            }
-          });
-          if (!resp.ok) return;
-
-          var data = await resp.json();
-          if (data && data.mailer_autoconfirm === false) {
-            setAuthMessage("当前项目仍开启邮箱验证。若你要取消验证：Supabase -> Authentication -> Providers -> Email -> 关闭 Confirm email。", true);
-          }
-        } catch (_e) {
-        }
-      }
-
       function openSignupModal() {
         signupEmailInput.value = authEmailInput.value.trim();
         signupPasswordInput.value = "";
@@ -758,7 +765,7 @@
           });
 
           if (loginResult.error) {
-            setSignupMessage("注册成功，但当前项目仍要求邮箱验证。请在 Supabase 关闭 Confirm email。", true);
+            setSignupMessage("注册成功，但自动登录失败，请直接在登录区登录。", true);
             setStatus("注册成功，但尚未登录", true);
             return;
           }
@@ -859,6 +866,7 @@
           if (withPlace.error) {
             if (isMissingPlaceColumnError(withPlace.error)) {
               dbHasPlaceColumn = false;
+              warnPlaceColumnMissing();
             } else {
               throw withPlace.error;
             }
@@ -935,6 +943,7 @@
 
               if (result.error && isMissingPlaceColumnError(result.error)) {
                 dbHasPlaceColumn = false;
+                warnPlaceColumnMissing();
                 delete payload.place_name;
                 result = await supabaseClient
                   .from("travel_points")
@@ -1051,6 +1060,78 @@
 
         if (result.error && isMissingPlaceColumnError(result.error)) {
           dbHasPlaceColumn = false;
+          warnPlaceColumnMissing();
+          return;
+        }
+
+        if (result.error && isUpdatePolicyError(result.error)) {
+          warnUpdatePolicyMissing();
+        }
+      }
+
+      async function renamePointFromUser(pointId, currentName) {
+        if (!currentUser) {
+          setStatus("请先登录", true);
+          return;
+        }
+
+        var nextName = window.prompt("请输入新的地点名：", currentName || "");
+        if (nextName === null) return;
+        nextName = nextName.trim();
+
+        if (!nextName) {
+          setStatus("地点名不能为空", true);
+          return;
+        }
+
+        var target = null;
+        for (var i = 0; i < points.length; i += 1) {
+          if (points[i].id === pointId) {
+            target = points[i];
+            break;
+          }
+        }
+
+        if (!target) {
+          setStatus("未找到目标记录，请刷新后重试", true);
+          return;
+        }
+
+        if (!dbHasPlaceColumn) {
+          warnPlaceColumnMissing();
+          return;
+        }
+
+        setBusy(true, "保存地点名中...");
+        try {
+          var result = await supabaseClient
+            .from("travel_points")
+            .update({ place_name: nextName })
+            .eq("id", pointId)
+            .eq("user_id", currentUser.id);
+
+          if (result.error) {
+            if (isMissingPlaceColumnError(result.error)) {
+              dbHasPlaceColumn = false;
+              warnPlaceColumnMissing();
+              return;
+            }
+            if (isUpdatePolicyError(result.error)) {
+              warnUpdatePolicyMissing();
+              return;
+            }
+            throw result.error;
+          }
+
+          target.placeName = nextName;
+          placeCache[target.lat.toFixed(5) + "," + target.lng.toFixed(5)] = nextName;
+          savePlaceCache(placeCache);
+          render(false);
+          setStatus("地点名已更新", false);
+        } catch (error) {
+          setStatus("地点名更新失败：" + toErrorMessage(error), true);
+        } finally {
+          setBusy(false);
         }
       }
 
@@ -1154,9 +1235,26 @@
         }
       }
 
+      function warnPlaceColumnMissing() {
+        if (placeColumnWarned) return;
+        placeColumnWarned = true;
+        setStatus("数据库缺少 place_name 列，无法持久化地点名。请在 Supabase 执行：alter table public.travel_points add column if not exists place_name text;", true);
+      }
+
+      function warnUpdatePolicyMissing() {
+        if (updatePolicyWarned) return;
+        updatePolicyWarned = true;
+        setStatus("数据库缺少 update 权限策略，无法修改地点名。请执行：create policy \"Users can update own points\" on public.travel_points for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);", true);
+      }
+
       function isMissingPlaceColumnError(error) {
         var msg = toErrorMessage(error).toLowerCase();
         return msg.indexOf("place_name") !== -1 && msg.indexOf("does not exist") !== -1;
+      }
+
+      function isUpdatePolicyError(error) {
+        var msg = toErrorMessage(error).toLowerCase();
+        return msg.indexOf("permission denied") !== -1 || msg.indexOf("row-level security") !== -1;
       }
 
       function getFilteredPoints() {
@@ -1210,6 +1308,7 @@
               opacity: 0.9,
               lineJoin: "round"
             }).addTo(trackLayer);
+            drawTrackArrows(latLngs);
           }
 
           filtered.forEach(function (p, idx) {
@@ -1270,9 +1369,23 @@
           coord.className = "coord";
           coord.textContent = "纬度: " + p.lat + "，经度: " + p.lng;
 
+          var actions = document.createElement("div");
+          actions.className = "history-actions";
+
+          var renameBtn = document.createElement("button");
+          renameBtn.className = "btn-plain btn-mini";
+          renameBtn.type = "button";
+          renameBtn.textContent = "修改地点名";
+          renameBtn.addEventListener("click", function () {
+            renamePointFromUser(p.id, p.placeName || "");
+          });
+
+          actions.appendChild(renameBtn);
+
           li.appendChild(t);
           li.appendChild(place);
           li.appendChild(coord);
+          li.appendChild(actions);
           historyList.appendChild(li);
         });
       }
@@ -1296,6 +1409,36 @@
 
         var bounds = L.latLngBounds(filtered.map(function (p) { return [p.lat, p.lng]; }));
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      }
+
+      function drawTrackArrows(latLngs) {
+        for (var i = 0; i < latLngs.length - 1; i += 1) {
+          var from = latLngs[i];
+          var to = latLngs[i + 1];
+          var mid = [(from[0] + to[0]) / 2, (from[1] + to[1]) / 2];
+          var angle = computeBearingDeg(from, to);
+
+          L.marker(mid, {
+            icon: L.divIcon({
+              className: "",
+              html: '<div class="track-arrow-icon" style="transform: rotate(' + (angle - 90).toFixed(1) + 'deg);">➤</div>',
+              iconSize: [18, 18],
+              iconAnchor: [9, 9]
+            }),
+            keyboard: false,
+            interactive: false
+          }).addTo(trackLayer);
+        }
+      }
+
+      function computeBearingDeg(from, to) {
+        var lat1 = from[0] * Math.PI / 180;
+        var lat2 = to[0] * Math.PI / 180;
+        var dLon = (to[1] - from[1]) * Math.PI / 180;
+        var y = Math.sin(dLon) * Math.cos(lat2);
+        var x = Math.cos(lat1) * Math.sin(lat2) -
+          Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+        return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
       }
 
       function setAuthStatus() {

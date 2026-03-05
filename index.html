@@ -89,6 +89,13 @@
       justify-content: space-between;
     }
 
+    .journey-banner-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
     .journey-banner[hidden] {
       display: none;
     }
@@ -536,7 +543,10 @@
 
     <section id="journey-view-banner" class="journey-banner" hidden>
       <span id="journey-view-text">当前旅程：</span>
-      <button id="exit-journey-view-btn" class="btn-plain" type="button">退出旅程视图</button>
+      <div class="journey-banner-actions">
+        <button id="share-journey-btn" class="btn-main" type="button">分享旅程</button>
+        <button id="exit-journey-view-btn" class="btn-plain" type="button">退出旅程视图</button>
+      </div>
     </section>
 
     <main class="workspace">
@@ -667,6 +677,7 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
+  <script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     (function () {
@@ -685,6 +696,9 @@
         start: "",
         end: ""
       };
+      var isShareExporting = false;
+      var SHARE_IMAGE_WIDTH = 2048;
+      var SHARE_IMAGE_HEIGHT = 1152;
 
       var currentMode = "all";
       var currentUser = null;
@@ -713,6 +727,7 @@
       var openMyJourneysBtn = document.getElementById("open-my-journeys-btn");
       var journeyViewBanner = document.getElementById("journey-view-banner");
       var journeyViewText = document.getElementById("journey-view-text");
+      var shareJourneyBtn = document.getElementById("share-journey-btn");
       var exitJourneyViewBtn = document.getElementById("exit-journey-view-btn");
 
       var signupModal = document.getElementById("signup-modal");
@@ -824,6 +839,10 @@
 
         exitJourneyViewBtn.addEventListener("click", function () {
           clearActiveJourneyView();
+        });
+
+        shareJourneyBtn.addEventListener("click", function () {
+          downloadJourneyShareImage();
         });
 
         journeyEditorApplyFilterBtn.addEventListener("click", function () {
@@ -1748,6 +1767,356 @@
         });
       }
 
+      function setShareExporting(exporting) {
+        isShareExporting = exporting;
+        shareJourneyBtn.textContent = exporting ? "生成中..." : "分享旅程";
+        updateActionButtons();
+        renderJourneyBanner();
+      }
+
+      async function downloadJourneyShareImage() {
+        if (!activeJourneyView) {
+          setStatus("请先进入旅程视图后再分享", true);
+          return;
+        }
+
+        var sharePoints = getJourneyPoints(activeJourneyView.journeyId);
+        if (!sharePoints.length) {
+          setStatus("该旅程暂无可分享地点", true);
+          return;
+        }
+
+        if (typeof window.leafletImage !== "function") {
+          setStatus("分享组件加载失败，请刷新页面重试", true);
+          return;
+        }
+
+        setShareExporting(true);
+        setStatus("正在生成分享图...", false);
+
+        try {
+          var imageCanvas = composeJourneyShareCanvas(
+            await buildShareMapCanvas(sharePoints),
+            sharePoints,
+            activeJourneyView.journeyName || "未命名旅程"
+          );
+
+          var filename = buildJourneyShareFilename(activeJourneyView.journeyName || "journey");
+          await triggerCanvasDownload(imageCanvas, filename);
+          setStatus("分享图已生成并开始下载", false);
+        } catch (error) {
+          setStatus("生成分享图失败：" + toErrorMessage(error), true);
+        } finally {
+          setShareExporting(false);
+        }
+      }
+
+      async function buildShareMapCanvas(sharePoints) {
+        if (!sharePoints.length) {
+          throw new Error("该旅程暂无可分享地点");
+        }
+
+        var canvasWidth = Math.floor(SHARE_IMAGE_WIDTH / 2) - 96;
+        var canvasHeight = SHARE_IMAGE_HEIGHT - 150;
+        var container = document.createElement("div");
+        container.style.position = "fixed";
+        container.style.left = "-100000px";
+        container.style.top = "-100000px";
+        container.style.width = canvasWidth + "px";
+        container.style.height = canvasHeight + "px";
+        container.style.opacity = "0";
+        container.style.pointerEvents = "none";
+        document.body.appendChild(container);
+
+        var shareMap = null;
+        try {
+          shareMap = L.map(container, {
+            zoomControl: false,
+            attributionControl: false,
+            preferCanvas: true,
+            inertia: false,
+            zoomAnimation: false,
+            fadeAnimation: false,
+            markerZoomAnimation: false
+          });
+
+          var tileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            crossOrigin: true
+          }).addTo(shareMap);
+
+          var latLngs = sharePoints.map(function (p) {
+            return [p.lat, p.lng];
+          });
+
+          if (latLngs.length === 1) {
+            shareMap.setView(latLngs[0], 13);
+          } else {
+            shareMap.fitBounds(L.latLngBounds(latLngs), {
+              padding: [32, 32],
+              maxZoom: 14
+            });
+          }
+
+          if (latLngs.length > 1) {
+            L.polyline(latLngs, {
+              color: "#b15f33",
+              weight: 5,
+              opacity: 0.92,
+              lineJoin: "round"
+            }).addTo(shareMap);
+          }
+
+          sharePoints.forEach(function (p) {
+            L.circleMarker([p.lat, p.lng], {
+              radius: 8,
+              color: "#ffffff",
+              fillColor: "#1f5e48",
+              fillOpacity: 0.95,
+              weight: 2
+            }).addTo(shareMap);
+          });
+
+          await waitForShareTileLoad(tileLayer, 10000);
+          await waitMs(240);
+          var rawCanvas = await leafLetImageToCanvas(shareMap);
+
+          var output = document.createElement("canvas");
+          output.width = canvasWidth;
+          output.height = canvasHeight;
+          var ctx = output.getContext("2d");
+          ctx.drawImage(rawCanvas, 0, 0, canvasWidth, canvasHeight);
+          drawSharePointNumbers(ctx, shareMap, sharePoints);
+          return output;
+        } finally {
+          if (shareMap) {
+            shareMap.remove();
+          }
+          if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
+          }
+        }
+      }
+
+      function drawSharePointNumbers(ctx, shareMap, sharePoints) {
+        sharePoints.forEach(function (p, index) {
+          var cp = shareMap.latLngToContainerPoint([p.lat, p.lng]);
+          var num = String(index + 1);
+
+          ctx.beginPath();
+          ctx.arc(cp.x, cp.y, 13, 0, Math.PI * 2);
+          ctx.fillStyle = "#1f5e48";
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "#ffffff";
+          ctx.stroke();
+
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 14px 'Noto Sans SC', sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(num, cp.x, cp.y + 0.3);
+        });
+      }
+
+      function composeJourneyShareCanvas(mapCanvas, sharePoints, journeyName) {
+        var canvas = document.createElement("canvas");
+        canvas.width = SHARE_IMAGE_WIDTH;
+        canvas.height = SHARE_IMAGE_HEIGHT;
+        var ctx = canvas.getContext("2d");
+
+        var leftWidth = Math.floor(SHARE_IMAGE_WIDTH / 2);
+        var rightWidth = SHARE_IMAGE_WIDTH - leftWidth;
+
+        ctx.fillStyle = "#f7f9f4";
+        ctx.fillRect(0, 0, SHARE_IMAGE_WIDTH, SHARE_IMAGE_HEIGHT);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, leftWidth, SHARE_IMAGE_HEIGHT);
+        ctx.fillStyle = "#fafaf8";
+        ctx.fillRect(leftWidth, 0, rightWidth, SHARE_IMAGE_HEIGHT);
+
+        var mapX = 48;
+        var mapY = 84;
+        var mapW = leftWidth - 96;
+        var mapH = SHARE_IMAGE_HEIGHT - 132;
+
+        ctx.strokeStyle = "rgba(31,45,34,0.16)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(mapX - 1, mapY - 1, mapW + 2, mapH + 2);
+        ctx.drawImage(mapCanvas, mapX, mapY, mapW, mapH);
+
+        ctx.fillStyle = "#1f2d22";
+        ctx.font = "700 34px 'Noto Sans SC', sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText("人生足迹 · " + journeyName, leftWidth + 38, 42);
+        ctx.font = "500 20px 'Noto Sans SC', sans-serif";
+        ctx.fillStyle = "rgba(31,45,34,0.72)";
+        ctx.fillText("导出时间：" + formatDateTime(Date.now()), leftWidth + 38, 92);
+
+        var listY = 148;
+        var availableHeight = SHARE_IMAGE_HEIGHT - listY - 56;
+        var rowNameSize = 28;
+        var rowTimeSize = 18;
+        var rowGap = 14;
+        var rowHeight = rowNameSize + rowTimeSize + rowGap + 8;
+
+        while (sharePoints.length * rowHeight > availableHeight && rowNameSize > 20) {
+          rowNameSize -= 1;
+          rowTimeSize = Math.max(14, rowTimeSize - 1);
+          rowGap = Math.max(8, rowGap - 1);
+          rowHeight = rowNameSize + rowTimeSize + rowGap + 8;
+        }
+
+        var maxRows = Math.floor(availableHeight / rowHeight);
+        var needCut = sharePoints.length > maxRows;
+        var renderCount = needCut ? Math.max(0, maxRows - 1) : sharePoints.length;
+
+        for (var i = 0; i < renderCount; i += 1) {
+          var p = sharePoints[i];
+          var y = listY + i * rowHeight;
+
+          ctx.fillStyle = "#174232";
+          ctx.font = "700 " + rowNameSize + "px 'Noto Sans SC', sans-serif";
+          ctx.fillText("#" + (i + 1) + " " + (p.placeName || "地点解析中..."), leftWidth + 38, y);
+
+          ctx.fillStyle = "rgba(31,45,34,0.72)";
+          ctx.font = "500 " + rowTimeSize + "px 'Noto Sans SC', sans-serif";
+          ctx.fillText(formatDateTime(p.timestamp), leftWidth + 70, y + rowNameSize + 2);
+        }
+
+        if (needCut) {
+          var remain = sharePoints.length - renderCount;
+          var tailY = listY + renderCount * rowHeight;
+          ctx.fillStyle = "rgba(31,45,34,0.7)";
+          ctx.font = "600 22px 'Noto Sans SC', sans-serif";
+          ctx.fillText("... 其余 " + remain + " 个地点（共 " + sharePoints.length + " 个）", leftWidth + 38, tailY + 2);
+        }
+
+        return canvas;
+      }
+
+      function buildJourneyShareFilename(journeyName) {
+        var safeName = (journeyName || "journey")
+          .replace(/[\\/:*?"<>|]+/g, "_")
+          .replace(/\s+/g, "_")
+          .trim();
+
+        if (!safeName) safeName = "journey";
+        var now = new Date();
+        var stamp =
+          String(now.getFullYear()) +
+          pad2(now.getMonth() + 1) +
+          pad2(now.getDate()) +
+          "-" +
+          pad2(now.getHours()) +
+          pad2(now.getMinutes()) +
+          pad2(now.getSeconds());
+
+        return "journey-" + safeName + "-" + stamp + ".png";
+      }
+
+      function pad2(n) {
+        return n < 10 ? "0" + n : String(n);
+      }
+
+      function waitMs(ms) {
+        return new Promise(function (resolve) {
+          window.setTimeout(resolve, ms);
+        });
+      }
+
+      function waitForShareTileLoad(tileLayer, timeoutMs) {
+        return new Promise(function (resolve, reject) {
+          if (!tileLayer || typeof tileLayer.isLoading !== "function") {
+            resolve();
+            return;
+          }
+
+          if (!tileLayer.isLoading()) {
+            resolve();
+            return;
+          }
+
+          var done = false;
+          var timer = window.setTimeout(function () {
+            if (done) return;
+            done = true;
+            tileLayer.off("load", onLoad);
+            reject(new Error("底图加载超时，请稍后重试"));
+          }, timeoutMs);
+
+          function onLoad() {
+            if (done) return;
+            done = true;
+            window.clearTimeout(timer);
+            tileLayer.off("load", onLoad);
+            resolve();
+          }
+
+          tileLayer.on("load", onLoad);
+        });
+      }
+
+      function leafLetImageToCanvas(leafletMap) {
+        return new Promise(function (resolve, reject) {
+          window.leafletImage(leafletMap, function (err, canvas) {
+            if (err || !canvas) {
+              reject(err || new Error("地图渲染失败"));
+              return;
+            }
+            resolve(canvas);
+          });
+        });
+      }
+
+      function triggerCanvasDownload(canvas, filename) {
+        return new Promise(function (resolve, reject) {
+          function directDownload(blobUrl) {
+            var isIOS = /iP(ad|hone|od)/.test(navigator.userAgent);
+            var a = document.createElement("a");
+            a.href = blobUrl;
+            a.download = filename;
+            a.rel = "noopener";
+            if (isIOS) {
+              window.open(blobUrl, "_blank");
+              resolve();
+              return;
+            }
+            document.body.appendChild(a);
+            a.click();
+            window.setTimeout(function () {
+              if (a.parentNode) {
+                a.parentNode.removeChild(a);
+              }
+              resolve();
+            }, 60);
+          }
+
+          if (typeof canvas.toBlob === "function") {
+            canvas.toBlob(function (blob) {
+              if (!blob) {
+                reject(new Error("图片导出失败，请重试"));
+                return;
+              }
+              var url = URL.createObjectURL(blob);
+              directDownload(url);
+              window.setTimeout(function () {
+                URL.revokeObjectURL(url);
+              }, 2000);
+            }, "image/png");
+            return;
+          }
+
+          try {
+            var dataUrl = canvas.toDataURL("image/png");
+            directDownload(dataUrl);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+
       async function addCurrentLocation() {
         if (!currentUser) {
           setStatus("请先登录", true);
@@ -2425,11 +2794,17 @@
       function renderJourneyBanner() {
         if (!activeJourneyView) {
           journeyViewBanner.hidden = true;
+          shareJourneyBtn.disabled = true;
+          shareJourneyBtn.title = "";
           exitJourneyViewBtn.disabled = true;
           return;
         }
+
+        var sharePoints = getJourneyPoints(activeJourneyView.journeyId);
         journeyViewText.textContent = "当前旅程：" + (activeJourneyView.journeyName || "未命名旅程");
         journeyViewBanner.hidden = false;
+        shareJourneyBtn.title = sharePoints.length ? "" : "该旅程暂无可分享地点";
+        shareJourneyBtn.disabled = Boolean(isBusy || isShareExporting || !sharePoints.length);
         exitJourneyViewBtn.disabled = Boolean(isBusy);
       }
 
@@ -2476,6 +2851,7 @@
 
       function updateActionButtons() {
         var isLoggedIn = Boolean(currentUser);
+        var shareCount = activeJourneyView ? getJourneyPoints(activeJourneyView.journeyId).length : 0;
         signinBtn.disabled = isBusy || isLoggedIn;
         openSignupBtn.disabled = isBusy || isLoggedIn;
         signoutBtn.disabled = isBusy || !isLoggedIn;
@@ -2485,6 +2861,7 @@
 
         openCreateJourneyBtn.disabled = isBusy || !isLoggedIn;
         openMyJourneysBtn.disabled = isBusy || !isLoggedIn;
+        shareJourneyBtn.disabled = isBusy || isShareExporting || !activeJourneyView || shareCount === 0;
         exitJourneyViewBtn.disabled = isBusy || !activeJourneyView;
 
         journeyEditorSaveBtn.disabled = isBusy;
